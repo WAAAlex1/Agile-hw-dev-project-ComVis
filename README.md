@@ -11,8 +11,8 @@ Contributions to this project repository has been made by:
 * s223998 - Alexander Aakersø - GIT: [WAAAlex1](https://github.com/WAAAlex1)
 * s224038 - Georg Dyvad - GIT: [GeorgBD](https://github.com/GeorgBD)
 * s224032 - Frederik Larsen- GIT: [FrederikOeLar](https://github.com/FrederikOeLar)
-* s224039 - Sofus  - GIT: [sofusham](https://github.com/sofusham)
-* s203855 - Andreas  - GIT: [TH3DUCKK](https://github.com/TH3DUCKK)
+* s224039 - Sofus Hammelsø - GIT: [sofusham](https://github.com/sofusham)
+* s203855 - Andreas Jensen - GIT: [TH3DUCKK](https://github.com/TH3DUCKK)
 
 
 ## Computer Vision for number categorization
