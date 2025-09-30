@@ -4,7 +4,7 @@ For further explanations (e.g. module functionality and further documentation) w
 
 ## Introduction
 
-This project has been made as part of the Agile Hardware Design [02203] course [link](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) offered at The Technical University of Denmark and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/). Computer Vision was chosen as an interesting area of work of which hardware generation using Chisel could prove useful. 
+This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/). Computer Vision was chosen as an interesting area of work of which hardware generation using Chisel could prove useful. 
 
 Contributions to this project repository has been made by:
 
