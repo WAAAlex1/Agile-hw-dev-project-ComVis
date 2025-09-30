@@ -1,6 +1,6 @@
 # This is a standard Read-me file explaining the overall idea, structure, and function of the overall project.
 
-For further explanations (e.g. module functionality and further documentation) we refer to the [Documentation]() folder.
+For further explanations (e.g. module functionality and further documentation) we refer to the [Documentation](https://github.com/WAAAlex1/Agile-hw-dev-project-ComVis/tree/master/Documentation) folder.
 
 ## Introduction
 
