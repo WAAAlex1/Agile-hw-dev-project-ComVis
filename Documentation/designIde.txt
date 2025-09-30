@@ -1,0 +1,9 @@
+SyncReadMem der læser 32bit words af gangen læser så 1 horizontal linje af hvert billed af gangen.
+Det skal så pipelines.
+
+Vi skal bruge 10 syncreadmem 1 for hvert tal 0-9.
+Ved AND'ing af hver input linje med hver mask linje summer vi så vi hvor mange bits ud af 32 der matcher.
+Den integer bliver vi ved med at adde til for hver linje indtil vi har været igennem hele billedet.
+Det giver en confidence score på X/1024 for hver mask.
+Den X værdi kan så summes med alle andre resultater fra hver anden mask med samme symbol.
+Fx 10 forskellige masks for hvert symbol summes til en confidence score på X / 10240 for hvert symbol.

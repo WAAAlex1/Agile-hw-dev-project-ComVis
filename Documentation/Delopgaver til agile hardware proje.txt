@@ -1,0 +1,15 @@
+Delopgaver til agile hardware project:
+
+    (Andreas) Image preprocessing til bitmaps (whatever language)
+
+    (Frederik) Indlæsning af image fil til mem hardcoding (scala)
+        Fra bitmap format til en horisontal word linje af gangen i en mem fil or something
+
+    (Alexander) Parallelt block ram (chisel)
+
+    (Georg) Enkelt template masking modul (chisel)
+        Enkelt template linje submodul
+
+    (Sofus) Eval modul og output (chisel)
+        Sammenligner confidence scores mellem symboler
+
