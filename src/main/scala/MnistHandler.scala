@@ -4,15 +4,8 @@ import java.io.IOException
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 
-/* IDEA:
-* Make this a helper function / class / object
-* that can read MNIST data and convert to directly to the binary format for memory initialization
-* for the synthesis to verilog
-* Take threshold and path as input. Allow for randomly selecting images
-*/
-
 /* TODO:
-* - Save 10 of each number as bmp
+* - Add random selection of images
 * - consider converting directly to binary using thresholds
 */
 
@@ -97,7 +90,6 @@ class MnistHandler(val Path: String) {
 
     ImageIO.write(image1, "bmp", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/" + name + ".bmp"))
   }
-
 }
 
 
