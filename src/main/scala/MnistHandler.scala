@@ -12,8 +12,6 @@ import java.awt.image.BufferedImage
 */
 
 /* TODO:
-* - read labels
-* - sort images by label
 * - Save 10 of each number as bmp
 * - consider converting directly to binary using thresholds
 */
@@ -21,7 +19,6 @@ import java.awt.image.BufferedImage
 class MnistHandler(val Path: String) {
   var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, 28, 28)
   var labels: Array[Byte] = Array.ofDim[Byte](60000)
-
 
   def readMnist(): Unit = {
     //val imagePath = "/home/andreas/Documents/agile-hw/MNIST_ORG/train-images.idx3-ubyte"
@@ -88,6 +85,19 @@ class MnistHandler(val Path: String) {
     this.labels = sorted.map(_._1)
     this.images = sorted.map(_._2)
   }
+
+  def saveToBmp(image: Array[Array[Byte]], name: String): Unit = {
+    val image1 = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
+    
+    for (i <- 0 until 28) {
+      for (j <- 0 until 28) {
+        image1.setRGB(j, i, images(0)(i)(j) << 16 | images(0)(i)(j) << 8 | images(0)(i)(j))
+      }
+    }
+
+    ImageIO.write(image1, "bmp", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/" + name + ".bmp"))
+  }
+
 }
 
 
