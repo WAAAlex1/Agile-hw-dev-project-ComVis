@@ -1,7 +1,7 @@
 # .github/workflows/master_protection.yml
 name: Master Branch Protection
 
-# Only run when PRs target the master branch
+# Only run when PRs / pushes target the master branch
 on:
   push:
     branches: [master, main]
