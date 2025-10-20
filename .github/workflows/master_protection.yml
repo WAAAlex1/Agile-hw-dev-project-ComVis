@@ -3,6 +3,8 @@ name: Master Branch Protection
 
 # Only run when PRs target the master branch
 on:
+  push:
+    branches: [master, main]
   pull_request:
     branches: [master, main]
 
