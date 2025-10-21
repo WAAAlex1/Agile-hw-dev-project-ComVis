@@ -48,4 +48,6 @@ build/
 ### Scala ###
 .bsp/
 /.idea
-/project
+/project/project
+/project/target
+
