@@ -7,23 +7,36 @@ class EvalTester2 extends AnyFlatSpec with ChiselScalatestTester {
 
     it should "find the highest confidence score" in {
         test(new Eval(N = 2, WIDTH = 10)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
-            // test 1
-            val scores1 = Seq(100, 200)
-            for (i <- scores1.indices) {
-                dut.io.c_scores(i).poke(scores1(i).U)
-            }
-            dut.clock.step()
-            dut.io.best_idx.expect(1.U)
-            dut.io.best_score.expect(200.U)
+            def applyScores(scores: Seq[Int], expectedIdx: Int, expectedScore: Int): Unit = {
+                // inputs
+                for (i <- scores.indices) {
+                    dut.io.c_scores(i).poke(scores(i).U)
+                }
 
-            // test 2
-            val scores2 = Seq(1, 0)
-            for (i <- scores2.indices) {
-                dut.io.c_scores(i).poke(scores2(i).U)
+                // valid high for one cycle
+                dut.io.in_valid.poke(true.B)
+                dut.clock.step()
+                dut.io.in_valid.poke(false.B)
+
+                dut.clock.step()
+
+                // check results
+                //dut.io.out_valid.expect(true.B)
+                dut.io.best_idx.expect(expectedIdx.U)
+                dut.io.best_score.expect(expectedScore.U)
+
+                dut.clock.step()
             }
-            dut.clock.step()
-            dut.io.best_idx.expect(0.U)
-            dut.io.best_score.expect(1.U)
+          
+            applyScores(
+                Seq(100, 200),
+                expectedIdx = 1, expectedScore = 200
+            )
+          
+            applyScores(
+                Seq(1, 0),
+                expectedIdx = 0, expectedScore = 1
+            )
 
         }
     }
