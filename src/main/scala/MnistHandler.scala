@@ -83,7 +83,7 @@ class MnistHandler(val Path: String, val Width: Int) {
     this.labels.groupBy(identity).view.mapValues(_.length).toMap
   }
 
-  def Sort: Unit = {
+  def Sort(): Unit = {
     val combined = this.labels.zip(this.images)
     val sorted   = combined.sortBy(_._1)
     this.labels = sorted.map(_._1)
@@ -99,5 +99,15 @@ class MnistHandler(val Path: String, val Width: Int) {
       }
     }
     ImageIO.write(bImage, "bmp", new File(name + ".bmp"))
+  }
+
+  def save10xNumber(number: Byte): Unit = {
+    this.readMnist()
+    this.readLabels()
+    this.Sort()
+    val firstIndex = this.labels.indexOf(number)
+    for (i <- firstIndex until firstIndex + 10) {
+      this.saveToBmp(this.images(i), s"mnist_${number}_${i}")
+    }
   }
 }
