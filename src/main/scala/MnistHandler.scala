@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage
  */
 
 class MnistHandler(val Path: String, val Width: Int) {
-  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, Width, Width)
+  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, this.Width, this.Width)
   var labels: Array[Byte]               = Array.ofDim[Byte](60000)
 
   def readMnist(): Unit = {
@@ -24,17 +24,17 @@ class MnistHandler(val Path: String, val Width: Int) {
     try {
       imageStream.skip(16) // skip header
       for (i <- 0 until 60000) {
-        for (j <- 0 until (Width * Width)) {
+        for (j <- 0 until (this.Width * this.Width)) {
           var pixelVal: Int = 0
           // Check if within padding y axis
-          if (j / Width > (Width - 28)/2 && j / Width < 28 + (Width - 28)/2) {
+          if (j / this.Width > (this.Width - 28)/2 && j / this.Width < 28 + (this.Width - 28)/2) {
             // Check if within padding x axis
-            if (j % Width > (Width - 28)/2 && j % Width < 28 + (Width - 28)/2) {
+            if (j % this.Width > (this.Width - 28)/2 && j % this.Width < 28 + (this.Width - 28)/2) {
             imageStream.read(dataBuffer)
             pixelVal = dataBuffer(0) & 0xff
             } 
           }
-          this.images(i)(j / Width)(j % Width) = pixelVal.toByte
+          this.images(i)(j / this.Width)(j % this.Width) = pixelVal.toByte
         }
       }
     } catch {
@@ -79,8 +79,9 @@ class MnistHandler(val Path: String, val Width: Int) {
       labelStream.close()
   }
 
-  def countLabelOccurrences(): Map[Byte, Int] =
+  def countLabelOccurrences(): Map[Byte, Int] = {
     this.labels.groupBy(identity).view.mapValues(_.length).toMap
+  }
 
   def Sort: Unit = {
     val combined = this.labels.zip(this.images)
@@ -90,13 +91,13 @@ class MnistHandler(val Path: String, val Width: Int) {
   }
 
   def saveToBmp(image: Array[Array[Byte]], name: String): Unit = {
-    val image1 = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
+    val bImage = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
 
     for (i <- 0 until 28) {
       for (j <- 0 until 28) {
-        image1.setRGB(j, i, images(0)(i)(j) << 16 | images(0)(i)(j) << 8 | images(0)(i)(j))
+        bImage.setRGB(j, i, image(i)(j) << 16 | image(i)(j) << 8 | image(i)(j))
       }
     }
-    ImageIO.write(image1, "bmp", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/" + name + ".bmp"))
+    ImageIO.write(bImage, "bmp", new File(name + ".bmp"))
   }
 }
