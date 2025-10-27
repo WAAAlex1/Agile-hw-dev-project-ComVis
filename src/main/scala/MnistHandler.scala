@@ -9,8 +9,8 @@ import java.awt.image.BufferedImage
  * - consider converting directly to binary using thresholds
  */
 
-class MnistHandler(val Path: String) {
-  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, 28, 28)
+class MnistHandler(val Path: String, val Width: Int) {
+  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, Width, Width)
   var labels: Array[Byte]               = Array.ofDim[Byte](60000)
 
   def readMnist(): Unit = {
@@ -23,12 +23,20 @@ class MnistHandler(val Path: String) {
 
     try {
       imageStream.skip(16) // skip header
-      for (i <- 0 until 60000)
-        for (j <- 0 until (28 * 28)) {
-          imageStream.read(dataBuffer)
-          val pixelVal = dataBuffer(0) & 0xff
-          this.images(i)(j / 28)(j % 28) = pixelVal.toByte
+      for (i <- 0 until 60000) {
+        for (j <- 0 until (Width * Width)) {
+          var pixelVal: Int = 0
+          // Check if within padding y axis
+          if (j / Width > (Width - 28)/2 && j / Width < 28 + (Width - 28)/2) {
+            // Check if within padding x axis
+            if (j % Width > (Width - 28)/2 && j % Width < 28 + (Width - 28)/2) {
+            imageStream.read(dataBuffer)
+            pixelVal = dataBuffer(0) & 0xff
+            } 
+          }
+          this.images(i)(j / Width)(j % Width) = pixelVal.toByte
         }
+      }
     } catch {
       case e: IOException => e.printStackTrace()
     } finally {
@@ -36,15 +44,20 @@ class MnistHandler(val Path: String) {
       imageStream.close()
     }
 
-    // val image = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
-
-    // for (i <- 0 until 28) {
-    //   for (j <- 0 until 28) {
-    //     image1.setRGB(j, i, images(0)(i)(j) << 16 | images(0)(i)(j) << 8 | images(0)(i)(j))
+    // Resize images if width is different from 28 (MNIST size)
+    // if (Width != 28) {
+    //   for (i <- 0 until 60000) {
+    //     for (x <- 0 until Width) {
+    //       for (y <- 0 until Width) {
+    //         val srcX = x * 28 / Width
+    //         val srcY = y * 28 / Width
+    //         images(i)(x)(y) = mnistImages(i)(srcX)(srcY)
+    //       }
+    //     }
     //   }
+    // } else {
+    //   images = mnistImages
     // }
-
-    // ImageIO.write(image1, "png", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/image1.bmp"))
   }
 
   def readLabels(): Unit = {
@@ -79,10 +92,11 @@ class MnistHandler(val Path: String) {
   def saveToBmp(image: Array[Array[Byte]], name: String): Unit = {
     val image1 = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
 
-    for (i <- 0 until 28)
-      for (j <- 0 until 28)
+    for (i <- 0 until 28) {
+      for (j <- 0 until 28) {
         image1.setRGB(j, i, images(0)(i)(j) << 16 | images(0)(i)(j) << 8 | images(0)(i)(j))
-
+      }
+    }
     ImageIO.write(image1, "bmp", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/" + name + ".bmp"))
   }
 }
