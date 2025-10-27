@@ -107,7 +107,7 @@ class MnistHandler(val Path: String, val Width: Int) {
     this.Sort()
     val firstIndex = this.labels.indexOf(number)
     for (i <- firstIndex until firstIndex + 10) {
-      this.saveToBmp(this.images(i), s"mnist_${number}_${i}")
+      this.saveToBmp(this.images(i), s"mnist_${number}_${i - firstIndex}")
     }
   }
 }
