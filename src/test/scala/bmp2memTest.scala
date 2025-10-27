@@ -1,6 +1,3 @@
-import org.scalatest.funsuite.AnyFunSuite
-import chisel3._
-import chisel3.util._
 import chiseltest.ChiselScalatestTester
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -12,7 +9,6 @@ class bmp2memTest extends AnyFlatSpec with ChiselScalatestTester {
     val file = new File("src/test/resources/handDrawnTwo.bmp") // 28x28 image
     val threshold = 128
     val bmpData = BmpUtil.bmp2mem(file, threshold)
-    val width = 28
 
     bmpData.foreach {row =>
       var outputString = ""
