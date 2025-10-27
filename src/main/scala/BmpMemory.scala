@@ -9,4 +9,3 @@ class BmpMemory(val data: Seq[Int], val width: Int) extends Module {
   // Convert the Scala Seq[Int] into a hardware Vec[UInt]
   io.out := VecInit(data.map(_.U(width.W)))
 }
-
