@@ -1,0 +1,44 @@
+# .github/workflows/master_protection.yml
+name: Master Branch Protection
+
+# Only run when PRs / pushes target the master branch
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  comprehensive-tests:
+    name: Comprehensive Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: 'sbt'
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+    # Experimental - could be useful, but we can also remove if not necessary.
+      - name: Check Scala formatting
+        run: |
+          echo "Checking Scala code formatting..."
+          sbt scalafmtCheck || {
+            echo "::error::Code is not properly formatted. Run 'sbt scalafmt' locally to fix."
+            exit 1
+          }
+
+      # Unit tests not included (basic CI already covers these).
+      # Here do property based tests and integration tests.
+      - name: Run property-based tests
+        run: sbt "testOnly property_based_tests.*"
+      - name: Run integration tests
+        run: sbt "testOnly integration_tests.*"
