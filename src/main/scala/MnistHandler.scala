@@ -13,28 +13,23 @@ class MnistHandler(val Path: String, val Width: Int) {
   var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, this.Width, this.Width)
   var labels: Array[Byte]               = Array.ofDim[Byte](60000)
 
+  require(Width >= 20, "Width is now smaller than the MNIST numbers without padding")
+
   def readMnist(): Unit = {
-    // val imagePath = "/home/andreas/Documents/agile-hw/MNIST_ORG/train-images.idx3-ubyte"
     val imagePath   = this.Path + "train-images.idx3-ubyte"
     var ubyteImages = new File(imagePath)
     val imageStream = new java.io.FileInputStream(ubyteImages)
 
     val dataBuffer = new Array[Byte](1)
+    val mnistImages = Array.ofDim[Byte](60000, 28, 28)
 
     try {
       imageStream.skip(16) // skip header
       for (i <- 0 until 60000) {
-        for (j <- 0 until (this.Width * this.Width)) {
-          var pixelVal: Int = 0
-          // Check if within padding y axis
-          if (j / this.Width > (this.Width - 28)/2 && j / this.Width < 28 + (this.Width - 28)/2) {
-            // Check if within padding x axis
-            if (j % this.Width > (this.Width - 28)/2 && j % this.Width < 28 + (this.Width - 28)/2) {
-            imageStream.read(dataBuffer)
-            pixelVal = dataBuffer(0) & 0xff
-            } 
-          }
-          this.images(i)(j / this.Width)(j % this.Width) = pixelVal.toByte
+        for (j <- 0 until (28 * 28)) {
+          imageStream.read(dataBuffer)
+          val pixelVal = dataBuffer(0) & 0xff
+          mnistImages(i)(j / 28)(j % 28) = pixelVal.toByte
         }
       }
     } catch {
@@ -44,20 +39,23 @@ class MnistHandler(val Path: String, val Width: Int) {
       imageStream.close()
     }
 
-    // Resize images if width is different from 28 (MNIST size)
-    // if (Width != 28) {
-    //   for (i <- 0 until 60000) {
-    //     for (x <- 0 until Width) {
-    //       for (y <- 0 until Width) {
-    //         val srcX = x * 28 / Width
-    //         val srcY = y * 28 / Width
-    //         images(i)(x)(y) = mnistImages(i)(srcX)(srcY)
-    //       }
-    //     }
-    //   }
-    // } else {
-    //   images = mnistImages
-    // }
+    // Add or remove padding to match desired Width if the Width is different from 28
+    if (this.Width != 28) {
+      val padding = (this.Width - 28) / 2
+      for (i <- 0 until 60000) {
+        for (y <- 0 until this.Width) {
+          for (x <- 0 until this.Width) {
+            if (y >= padding && y < padding + 28 && x >= padding && x < padding + 28) {
+              this.images(i)(y)(x) = mnistImages(i)(y - padding)(x - padding)
+            } else {
+              this.images(i)(y)(x) = 0
+            }
+          }
+        }
+      }
+    } else {
+      this.images = mnistImages
+    }
   }
 
   def readLabels(): Unit = {
