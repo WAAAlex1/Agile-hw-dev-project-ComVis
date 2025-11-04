@@ -51,4 +51,5 @@ build/
 /.idea
 /project/project
 /project/target
+test_run_dir/
 
