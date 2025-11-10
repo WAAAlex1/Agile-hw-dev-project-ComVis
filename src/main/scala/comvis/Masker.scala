@@ -3,34 +3,66 @@ package comvis
 import chisel3._
 import chisel3.util._
 
+
+
 class Masker(val imgWidth: Int) extends Module {
   val io = IO(new Bundle {
     val maskIn = Input(UInt(imgWidth.W))
     val imgIn = Input(UInt(imgWidth.W))
-    val confidence = Output(UInt((log2Up(imgWidth^2)).W))
+    val start = Input(Bool())
+    val confidence = Output(UInt((((log2Up(imgWidth)*2)+1).W)))
     val ready = Output(Bool())
   })
 
-  //Counter for ready. Increments every clockcycle.
-  val sliceCnt = RegInit(0.U((log2Up(imgWidth)).W))
-  sliceCnt := sliceCnt + 1.U
+  object State extends ChiselEnum {
+    val idle, run = Value
+  }
+  import State._
 
-  val confidenceReg = RegInit(0.U((log2Up(imgWidth^2)).W))
+  val maskSlice = Module(new MaskSlice(imgWidth))
 
-  val maskSlice = new MaskSlice(imgWidth)
+  val sliceCnt = RegInit(0.U((log2Up(imgWidth + 1)).W))
+  val confidenceReg = RegInit(0.U(imgWidth.W))
+  val stateReg = RegInit(idle)
+
+  //Defaults:
+  io.ready := false.B
+  io.confidence := 0.U
   maskSlice.io.maskSlice := io.maskIn
   maskSlice.io.imgSlice := io.imgIn
 
-  //Increments every cycle
-  confidenceReg := confidenceReg + maskSlice.io.confidence
+  switch(stateReg) {
+    is (idle)
+    {
+      when(io.start)
+      {
+        stateReg := run
+      }
+      .elsewhen(true.B)  //How to .otherwise??
+      {
+        stateReg := idle
+      }
+    }
+    is (run)
+    {
+      when(sliceCnt === imgWidth.U)
+      {
+        io.ready := true.B
+        io.confidence := confidenceReg
+        sliceCnt := 0.U
+        stateReg := idle
+      }
+      .elsewhen(true.B)
+      {
+        //Increments every cycle
+        confidenceReg := confidenceReg + maskSlice.io.confidence
+        sliceCnt := sliceCnt + 1.U
 
-  //Needed default values?
-  io.ready := false.B
-  io.confidence := 0.U
+      }
 
-  //How to make sure this exponent is done in scala on generation??
-  when(sliceCnt === (imgWidth^2).U){
-    io.ready := true.B
-    io.confidence := confidenceReg
+      stateReg := run
+    }
   }
+
+
 }

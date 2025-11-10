@@ -10,9 +10,9 @@ class MaskSliceTester extends AnyFlatSpec with ChiselScalatestTester {
 
   "MaskSlice" should "find confidence 4" in {
     test(new MaskSlice(32)) { dut =>
-      dut.io.maskSlice.poke("h01010101".U)
-      dut.io.imgSlice.poke("hFEFEFEF1".U)
-      dut.io.confidence.expect(4)
+      dut.io.maskSlice.poke("h00000001".U)
+      dut.io.imgSlice.poke("h00000001".U)
+      dut.io.confidence.expect(32)
     }
   }
 }

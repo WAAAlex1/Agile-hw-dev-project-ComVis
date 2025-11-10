@@ -7,3 +7,10 @@ Den integer bliver vi ved med at adde til for hver linje indtil vi har været ig
 Det giver en confidence score på X/1024 for hver mask.
 Den X værdi kan så summes med alle andre resultater fra hver anden mask med samme symbol.
 Fx 10 forskellige masks for hvert symbol summes til en confidence score på X / 10240 for hvert symbol.
+
+
+Muligheder for forbedring af detection precision:
+    Feature matching fx:
+        Holes
+        Verticality
+        Area
