@@ -17,13 +17,13 @@ class MnistHandler(val Path: String, val Width: Int) {
   require(Width >= 20, "Width is now smaller than the MNIST numbers without padding")
 
   def readMnist(testImages: Boolean = false): Unit = {
-    
+
     var imagePath: String = ""
 
     if (testImages) {
-      imagePath   = this.Path + "t10k-images.idx3-ubyte"
+      imagePath = this.Path + "t10k-images.idx3-ubyte"
     } else {
-      imagePath   = this.Path + "train-images.idx3-ubyte" 
+      imagePath = this.Path + "train-images.idx3-ubyte"
     }
 
     var ubyteImages = new File(imagePath)
@@ -63,14 +63,14 @@ class MnistHandler(val Path: String, val Width: Int) {
     }
   }
 
-  def readLabels(testLabels: Boolean  = false): Unit = {
+  def readLabels(testLabels: Boolean = false): Unit = {
 
     var labelPath: String = ""
 
-    if (testLabels) { 
-      labelPath   = this.Path + "t10k-labels.idx1-ubyte"
+    if (testLabels) {
+      labelPath = this.Path + "t10k-labels.idx1-ubyte"
     } else {
-      labelPath   = this.Path + "train-labels.idx1-ubyte" 
+      labelPath = this.Path + "train-labels.idx1-ubyte"
     }
     var ubyteLabels = new File(labelPath)
     val labelStream = new java.io.FileInputStream(ubyteLabels)
