@@ -3,15 +3,13 @@ package comvis
 import chisel3._
 import chisel3.util._
 
-
-
 class Masker(val imgWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val maskIn = Input(UInt(imgWidth.W))
-    val imgIn = Input(UInt(imgWidth.W))
-    val start = Input(Bool())
-    val confidence = Output(UInt((((log2Up(imgWidth)*2)+1).W)))
-    val ready = Output(Bool())
+    val maskIn     = Input(UInt(imgWidth.W))
+    val imgIn      = Input(UInt(imgWidth.W))
+    val start      = Input(Bool())
+    val confidence = Output(UInt(((log2Up(imgWidth) * 2) + 1).W))
+    val ready      = Output(Bool())
   })
 
   object State extends ChiselEnum {
@@ -21,48 +19,42 @@ class Masker(val imgWidth: Int) extends Module {
 
   val maskSlice = Module(new MaskSlice(imgWidth))
 
-  val sliceCnt = RegInit(0.U((log2Up(imgWidth + 1)).W))
+  val sliceCnt      = RegInit(0.U(log2Up(imgWidth + 1).W))
   val confidenceReg = RegInit(0.U(imgWidth.W))
-  val stateReg = RegInit(idle)
+  val stateReg      = RegInit(idle)
 
-  //Defaults:
-  io.ready := false.B
-  io.confidence := 0.U
+  // Defaults:
+  io.ready               := false.B
+  io.confidence          := 0.U
   maskSlice.io.maskSlice := io.maskIn
-  maskSlice.io.imgSlice := io.imgIn
+  maskSlice.io.imgSlice  := io.imgIn
 
   switch(stateReg) {
-    is (idle)
-    {
-      when(io.start)
-      {
+    is(idle) {
+      when(io.start) {
         stateReg := run
       }
-      .elsewhen(true.B)  //How to .otherwise??
-      {
-        stateReg := idle
-      }
+        .elsewhen(true.B) // How to .otherwise??
+        {
+          stateReg := idle
+        }
     }
-    is (run)
-    {
-      when(sliceCnt === imgWidth.U)
-      {
-        io.ready := true.B
+    is(run) {
+      when(sliceCnt === imgWidth.U) {
+        io.ready      := true.B
         io.confidence := confidenceReg
-        sliceCnt := 0.U
-        stateReg := idle
+        sliceCnt      := 0.U
+        stateReg      := idle
       }
-      .elsewhen(true.B)
-      {
-        //Increments every cycle
-        confidenceReg := confidenceReg + maskSlice.io.confidence
-        sliceCnt := sliceCnt + 1.U
+        .elsewhen(true.B) {
+          // Increments every cycle
+          confidenceReg := confidenceReg + maskSlice.io.confidence
+          sliceCnt      := sliceCnt + 1.U
 
-      }
+        }
 
       stateReg := run
     }
   }
-
 
 }
