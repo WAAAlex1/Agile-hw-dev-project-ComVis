@@ -1,9 +1,4 @@
 
-/* 
- * TODO:
- * - Simulate processing elements
- * - Simulate control unit
- */
 
 class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInputs: Int, val nProcessingElements: Int, val Threshold: Int) {
 
@@ -14,7 +9,7 @@ class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInpu
   var inputResults: Array[Byte] = Array.ofDim[Byte](nInputs)
 
   // Registers
-  var confRegisters: Array[Int] = Array.ofDim[Int](nProcessingElements)
+  var confRegisters: Array[Int] = Array.ofDim[Int](10)
   var inputAddr: Int = 0
   var templateAddr: Int = 0
   
@@ -55,8 +50,8 @@ class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInpu
   }
 
   def masker(templateIdx: Int): Unit = {
-    val templateLine = this.templateImages(templateIdx)(this.templateAddr % 32)
-    val inputLine    = this.inputImages(this.inputAddr)(this.templateAddr % 32)
+    val templateLine = this.templateImages(templateIdx)(this.templateAddr)
+    val inputLine    = this.inputImages(this.inputAddr)(this.templateAddr)
 
     // Perform masking operation
     val xnorRes = ~(templateLine ^ inputLine)
@@ -68,16 +63,17 @@ class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInpu
     var idxMax: Int = 0
     var confMax: Int = this.confRegisters(0)
 
-    for (i <- 1 until nProcessingElements) {
+    for (i <- 1 until 9) {
       if (this.confRegisters(i) > confMax) {
         confMax = this.confRegisters(i)
         idxMax  = i
       }
     }
+
+    this.inputResults(this.inputAddr) = this.templateLabels(idxMax)
   }
 
   def step(): Unit = {
-    // Placeholder for the step functionality
     for (i <- 0 until nProcessingElements) {
       // Simulate processing element operation
       this.masker(i)
