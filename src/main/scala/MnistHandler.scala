@@ -3,6 +3,7 @@ import java.io.FileInputStream
 import java.io.IOException
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
+import chisel3.Bool
 
 /* TODO:
  * - Add random selection of images
@@ -15,8 +16,16 @@ class MnistHandler(val Path: String, val Width: Int) {
 
   require(Width >= 20, "Width is now smaller than the MNIST numbers without padding")
 
-  def readMnist(): Unit = {
-    val imagePath   = this.Path + "train-images.idx3-ubyte"
+  def readMnist(testImages: Boolean = false): Unit = {
+    
+    var imagePath: String = ""
+
+    if (testImages) {
+      imagePath   = this.Path + "t10k-images.idx3-ubyte"
+    } else {
+      imagePath   = this.Path + "train-images.idx3-ubyte" 
+    }
+
     var ubyteImages = new File(imagePath)
     val imageStream = new java.io.FileInputStream(ubyteImages)
 
@@ -54,8 +63,15 @@ class MnistHandler(val Path: String, val Width: Int) {
     }
   }
 
-  def readLabels(): Unit = {
-    val labelPath   = this.Path + "train-labels.idx1-ubyte"
+  def readLabels(testLabels: Boolean  = false): Unit = {
+
+    var labelPath: String = ""
+
+    if (testLabels) { 
+      labelPath   = this.Path + "t10k-labels.idx1-ubyte"
+    } else {
+      labelPath   = this.Path + "train-labels.idx1-ubyte" 
+    }
     var ubyteLabels = new File(labelPath)
     val labelStream = new java.io.FileInputStream(ubyteLabels)
 
