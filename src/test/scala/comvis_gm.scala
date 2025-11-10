@@ -56,7 +56,7 @@ class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInpu
     // Perform masking operation
     val xnorRes = ~(templateLine ^ inputLine)
 
-    this.confRegisters(templateIdx) += Integer.bitCount(xnorRes & 0xFFFF)
+    this.confRegisters(templateIdx) += Integer.bitCount(xnorRes & 0xFFFFFFFF)
   }
 
   def evaluator(): Unit = {
