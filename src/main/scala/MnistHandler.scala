@@ -9,17 +9,19 @@ import java.awt.image.BufferedImage
  * - consider converting directly to binary using thresholds
  */
 
-class MnistHandler(val Path: String) {
-  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, 28, 28)
+class MnistHandler(val Path: String, val Width: Int) {
+  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, this.Width, this.Width)
   var labels: Array[Byte]               = Array.ofDim[Byte](60000)
 
+  require(Width >= 20, "Width is now smaller than the MNIST numbers without padding")
+
   def readMnist(): Unit = {
-    // val imagePath = "/home/andreas/Documents/agile-hw/MNIST_ORG/train-images.idx3-ubyte"
     val imagePath   = this.Path + "train-images.idx3-ubyte"
     var ubyteImages = new File(imagePath)
     val imageStream = new java.io.FileInputStream(ubyteImages)
 
-    val dataBuffer = new Array[Byte](1)
+    val dataBuffer  = new Array[Byte](1)
+    val mnistImages = Array.ofDim[Byte](60000, 28, 28)
 
     try {
       imageStream.skip(16) // skip header
@@ -27,7 +29,7 @@ class MnistHandler(val Path: String) {
         for (j <- 0 until (28 * 28)) {
           imageStream.read(dataBuffer)
           val pixelVal = dataBuffer(0) & 0xff
-          this.images(i)(j / 28)(j % 28) = pixelVal.toByte
+          mnistImages(i)(j / 28)(j % 28) = pixelVal.toByte
         }
     } catch {
       case e: IOException => e.printStackTrace()
@@ -36,15 +38,20 @@ class MnistHandler(val Path: String) {
       imageStream.close()
     }
 
-    // val image = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
-
-    // for (i <- 0 until 28) {
-    //   for (j <- 0 until 28) {
-    //     image1.setRGB(j, i, images(0)(i)(j) << 16 | images(0)(i)(j) << 8 | images(0)(i)(j))
-    //   }
-    // }
-
-    // ImageIO.write(image1, "png", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/image1.bmp"))
+    // Add or remove padding to match desired Width if the Width is different from 28
+    if (this.Width != 28) {
+      val padding = (this.Width - 28) / 2
+      for (i <- 0 until 60000)
+        for (y <- 0 until this.Width)
+          for (x <- 0 until this.Width)
+            if (y >= padding && y < padding + 28 && x >= padding && x < padding + 28) {
+              this.images(i)(y)(x) = mnistImages(i)(y - padding)(x - padding)
+            } else {
+              this.images(i)(y)(x) = 0
+            }
+    } else {
+      this.images = mnistImages
+    }
   }
 
   def readLabels(): Unit = {
@@ -69,7 +76,7 @@ class MnistHandler(val Path: String) {
   def countLabelOccurrences(): Map[Byte, Int] =
     this.labels.groupBy(identity).view.mapValues(_.length).toMap
 
-  def Sort: Unit = {
+  def Sort(): Unit = {
     val combined = this.labels.zip(this.images)
     val sorted   = combined.sortBy(_._1)
     this.labels = sorted.map(_._1)
@@ -77,12 +84,20 @@ class MnistHandler(val Path: String) {
   }
 
   def saveToBmp(image: Array[Array[Byte]], name: String): Unit = {
-    val image1 = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
+    val bImage = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
 
     for (i <- 0 until 28)
       for (j <- 0 until 28)
-        image1.setRGB(j, i, images(0)(i)(j) << 16 | images(0)(i)(j) << 8 | images(0)(i)(j))
+        bImage.setRGB(j, i, image(i)(j) << 16 | image(i)(j) << 8 | image(i)(j))
+    ImageIO.write(bImage, "bmp", new File(name + ".bmp"))
+  }
 
-    ImageIO.write(image1, "bmp", new File("/home/andreas/Documents/agile-hw/MNIST_ORG/" + name + ".bmp"))
+  def save10xNumber(number: Byte): Unit = {
+    this.readMnist()
+    this.readLabels()
+    this.Sort()
+    val firstIndex = this.labels.indexOf(number)
+    for (i <- firstIndex until firstIndex + 10)
+      this.saveToBmp(this.images(i), s"mnist_${number}_${i - firstIndex}")
   }
 }
