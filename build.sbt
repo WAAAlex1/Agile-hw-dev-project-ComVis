@@ -18,3 +18,9 @@ For future property based tests
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.17.0" % Test
 libraryDependencies += "com.github.scalaprops" %% "scalaprops" % "0.9.1" % Test
 */
+/*
+For future property based tests
+
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.17.0" % Test
+libraryDependencies += "com.github.scalaprops" %% "scalaprops" % "0.9.1" % Test
+*/
