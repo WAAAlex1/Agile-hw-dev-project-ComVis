@@ -12,3 +12,9 @@ addCompilerPlugin("edu.berkeley.cs" %% "chisel3-plugin" % chiselVersion cross Cr
 libraryDependencies += "edu.berkeley.cs" %% "chisel3" % chiselVersion
 libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.6.2"
 
+/*
+For future property based tests
+
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.17.0" % Test
+libraryDependencies += "com.github.scalaprops" %% "scalaprops" % "0.9.1" % Test
+*/
