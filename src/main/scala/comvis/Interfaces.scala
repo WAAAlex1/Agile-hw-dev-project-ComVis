@@ -28,6 +28,7 @@ class MemWrite(val addrWidth: Int, val imgWidth: Int) extends Bundle {
 
 class conAccIn(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Bundle {
   val valid = Input(Bool())
+  val done = Input(Bool())
 
   //We need One vec of template results for each symbol so a nested Vec.
   val sliceConf = Input(Vec(symbolN, Vec(TPN, UInt(imgWidth.W))))

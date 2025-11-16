@@ -8,6 +8,7 @@ class Masker(val imgWidth: Int) extends Module {
     val maskIn     = Input(UInt(imgWidth.W))
     val imgIn      = Input(UInt(imgWidth.W))
     val start      = Input(Bool())
+    val sliceCnt   = Input(UInt(log2Up(imgWidth + 1).W))
     val confidence = Output(UInt(((log2Up(imgWidth) * 2) + 1).W))
     val ready      = Output(Bool())
   })
@@ -19,7 +20,7 @@ class Masker(val imgWidth: Int) extends Module {
 
   val maskSlice = Module(new MaskSlice(imgWidth))
 
-  val sliceCnt      = RegInit(0.U(log2Up(imgWidth + 1).W))
+
   val confidenceReg = RegInit(0.U(imgWidth.W))
   val stateReg      = RegInit(idle)
 
@@ -40,17 +41,14 @@ class Masker(val imgWidth: Int) extends Module {
         }
     }
     is(run) {
-      when(sliceCnt === imgWidth.U) {
+      when(io.sliceCnt === imgWidth.U) {
         io.ready      := true.B
         io.confidence := confidenceReg
-        sliceCnt      := 0.U
         stateReg      := idle
       }
         .elsewhen(true.B) {
           // Increments every cycle
           confidenceReg := confidenceReg + maskSlice.io.confidence
-          sliceCnt      := sliceCnt + 1.U
-
         }
 
       stateReg := run
