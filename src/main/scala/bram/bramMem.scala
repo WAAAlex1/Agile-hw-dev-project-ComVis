@@ -140,26 +140,25 @@ class BramMemWrapper(
   *   Optional list of init files (one per template), or None
   */
 class MultiTemplateBram(
-     val TPN: Int,        // Templates Per Number
-     val symbolN: Int,    // Number of symbols (e.g., 10 for digits 0-9)
-     val imgWidth: Int,   // Image width (and height, since square)
-     val initFiles: Option[Seq[String]] = None
-   ) extends Module {
+  val TPN: Int, // Templates Per Number
+  val symbolN: Int, // Number of symbols (e.g., 10 for digits 0-9)
+  val imgWidth: Int, // Image width (and height, since square)
+  val initFiles: Option[Seq[String]] = None
+) extends Module {
 
-  val addrWidth = log2Ceil(imgWidth)
+  val addrWidth      = log2Ceil(imgWidth)
   val totalTemplates = TPN * symbolN
 
   val io = IO(new Bundle {
-    val memIn = new MemIn(addrWidth)
+    val memIn    = new MemIn(addrWidth)
     val memWrite = new MemWrite(addrWidth, imgWidth)
-    val memOut = new MemOut(imgWidth, TPN, symbolN)
+    val memOut   = new MemOut(imgWidth, TPN, symbolN)
   })
 
   // Instantiate template BRAMs (read-only, initialized from files)
   val templates = initFiles match {
     case Some(files) =>
-      require(files.length == totalTemplates,
-        s"Expected ${totalTemplates} init files, got ${files.length}")
+      require(files.length == totalTemplates, s"Expected ${totalTemplates} init files, got ${files.length}")
       files.zipWithIndex.map { case (file, idx) =>
         println(s"[MultiTemplateBram] Template ${idx} init file: ${file}")
         Module(new BramMemWrapper(imgWidth, imgWidth, Some(file)))
@@ -173,26 +172,26 @@ class MultiTemplateBram(
 
   // Connect image BRAM (read-write)
   imageBram.io.lineAddr := io.memIn.rdAddrIdx
-  imageBram.io.lineEn := io.memIn.rdEn
-  imageBram.io.wrEn := io.memWrite.wrEn
-  imageBram.io.wrAddr := io.memWrite.wrAddr
-  imageBram.io.wrData := io.memWrite.wrData
-  io.memOut.imgData := imageBram.io.lineData
+  imageBram.io.lineEn   := io.memIn.rdEn
+  imageBram.io.wrEn     := io.memWrite.wrEn
+  imageBram.io.wrAddr   := io.memWrite.wrAddr
+  imageBram.io.wrData   := io.memWrite.wrData
+  io.memOut.imgData     := imageBram.io.lineData
 
   // Connect all template BRAMs (read-only)
   for ((templateInstance, idx) <- templates.zipWithIndex) {
     // Read path - same address to all templates
     templateInstance.io.lineAddr := io.memIn.rdAddrIdx
-    templateInstance.io.lineEn := io.memIn.rdEn
+    templateInstance.io.lineEn   := io.memIn.rdEn
 
     // Templates are read-only - disable writes
-    templateInstance.io.wrEn := false.B
+    templateInstance.io.wrEn   := false.B
     templateInstance.io.wrAddr := 0.U
     templateInstance.io.wrData := 0.U
 
     // Organize output as Vec[symbolN] of Vec[TPN]
-    val symbolIdx = idx / TPN       // Which digit (0-9)
-    val templateIdx = idx % TPN     // Which template for that digit
+    val symbolIdx   = idx / TPN // Which digit (0-9)
+    val templateIdx = idx % TPN // Which template for that digit
     io.memOut.templateData(symbolIdx)(templateIdx) := templateInstance.io.lineData
   }
 

@@ -3,7 +3,7 @@ package bram
 import chisel3._
 
 /** Configuration objects for BRAM memory layouts
- */
+  */
 object BramConfig {
 
   // MNIST 24x24 configuration (padding removed)
@@ -29,34 +29,34 @@ object BramConfig {
 }
 
 /** Pre-configured MultiTemplateBram variants
- */
+  */
 object ConfiguredBrams {
 
   // MNIST 24x24: 10 templates per digit, 10 digits
   class t24x100(initFiles: Option[Seq[String]] = None)
-    extends MultiTemplateBram(
-      TPN = BramConfig.MnistPaddingRemoved.TPN,
-      symbolN = BramConfig.MnistPaddingRemoved.symbolN,
-      imgWidth = BramConfig.MnistPaddingRemoved.imgWidth,
-      initFiles = initFiles
-    )
+      extends MultiTemplateBram(
+        TPN = BramConfig.MnistPaddingRemoved.TPN,
+        symbolN = BramConfig.MnistPaddingRemoved.symbolN,
+        imgWidth = BramConfig.MnistPaddingRemoved.imgWidth,
+        initFiles = initFiles
+      )
 
   // MNIST 28x28: 10 templates per digit, 10 digits
   class t28x100(initFiles: Option[Seq[String]] = None)
-    extends MultiTemplateBram(
-      TPN = BramConfig.MnistStandard.TPN,
-      symbolN = BramConfig.MnistStandard.symbolN,
-      imgWidth = BramConfig.MnistStandard.imgWidth,
-      initFiles = initFiles
-    )
+      extends MultiTemplateBram(
+        TPN = BramConfig.MnistStandard.TPN,
+        symbolN = BramConfig.MnistStandard.symbolN,
+        imgWidth = BramConfig.MnistStandard.imgWidth,
+        initFiles = initFiles
+      )
 
   // MNIST 32x32: 10 templates per digit, 10 digits (better BRAM utilization)
   class t32x100(initFiles: Option[Seq[String]] = None)
-    extends MultiTemplateBram(
-      TPN = BramConfig.MnistPaddingAdded.TPN,
-      symbolN = BramConfig.MnistPaddingAdded.symbolN,
-      imgWidth = BramConfig.MnistPaddingAdded.imgWidth,
-      initFiles = initFiles
-    )
+      extends MultiTemplateBram(
+        TPN = BramConfig.MnistPaddingAdded.TPN,
+        symbolN = BramConfig.MnistPaddingAdded.symbolN,
+        imgWidth = BramConfig.MnistPaddingAdded.imgWidth,
+        initFiles = initFiles
+      )
 
 }
