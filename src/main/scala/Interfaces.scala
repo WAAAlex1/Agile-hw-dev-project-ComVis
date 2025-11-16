@@ -9,10 +9,10 @@ class MaskIn extends Bundle {
 }
 
 class MemOut(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Bundle {
-  val imgData = Input(UInt(imgWidth.W))
+  val imgData = Output(UInt(imgWidth.W))
 
   //We need one template word for each template for each symbol.
-  val templateData = Input(Vec(TPN * symbolN, UInt(imgWidth.W)))
+  val templateData = Output(Vec(TPN * symbolN, UInt(imgWidth.W)))
 }
 
 class MemIn(val addrWidth: Int) extends Bundle {
