@@ -35,6 +35,7 @@ object BmpUtil {
     // threshold: Cutoff value for black or white pixels (0 to 255)
     // name: Output file name (without extension)
     // Outputs: A hex file with each line representing a row of the image
+    val path = "./templates/"
     val intSeq = bmp2mem(input, threshold)
     val outputFile = new File(name + ".hex")
     val writer = new java.io.PrintWriter(outputFile)
@@ -57,10 +58,10 @@ object BmpUtil {
 
     for (i <- 0 to 9) {
       mH.save10xNumber(i.toByte)
-      for (j <- 0 until 10) {
+      for (j <- 0 until 9) {
         val fileName = s"mnist_${i}_${j}.bmp"
         val inputFile = new File(fileName)
-        bmp2hexfile(inputFile, threshold, s"mnist_template_${i}_${j}")
+        bmp2hexfile(inputFile, threshold, f"template_${i * 10 + j}")
         if (!inputFile.delete()) {
           println(s"Could not delete temporary file: $fileName")
         }
