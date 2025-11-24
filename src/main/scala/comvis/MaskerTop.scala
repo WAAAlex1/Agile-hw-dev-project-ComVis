@@ -44,8 +44,7 @@ class MaskerTop(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Modul
       when(io.extIn.start) {
         stateReg := run
       }
-        .elsewhen(true.B) // How to .otherwise??
-        {
+        .otherwise {
           stateReg := idle
         }
     }
@@ -55,7 +54,7 @@ class MaskerTop(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Modul
         sliceCnt    := 0.U
         stateReg    := idle
       }
-        .elsewhen(true.B) {
+        .otherwise {
           // Increments every cycle
           io.out.valid := true.B
           sliceCnt     := sliceCnt + 1.U
