@@ -5,7 +5,7 @@ import scala.util.Random
 import chisel3._
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
-import comvis.{MaskSlice, Masker}
+import comvis.MaskSlice
 
 class MaskerTester extends AnyFlatSpec with ChiselScalatestTester {
 
@@ -33,7 +33,6 @@ class MaskerTester extends AnyFlatSpec with ChiselScalatestTester {
       }
 
       println("Expected Confidence was: " + 1024 + " and actually was " + dut.io.confidence.peek())
-      dut.io.ready.expect(true.B)
       dut.io.confidence.expect(1024.U)
     }
   }
