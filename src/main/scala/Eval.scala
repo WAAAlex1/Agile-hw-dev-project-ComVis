@@ -6,8 +6,8 @@ class Eval(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Module {
   val scoreWidth = log2Up((imgWidth * imgWidth) * TPN)
 
   val io = IO(new Bundle {
-    val in  = new evalIn(imgWidth, TPN, symbolN)
-    val bestIdx = Output (UInt(log2Ceil(symbolN).W))
+    val in        = new evalIn(imgWidth, TPN, symbolN)
+    val bestIdx   = Output(UInt(log2Ceil(symbolN).W))
     val bestScore = Output(UInt(scoreWidth.W))
   })
 
