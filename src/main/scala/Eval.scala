@@ -1,22 +1,24 @@
 import chisel3._
 import chisel3.util._
+import comvis.evalIn
 
-class Eval(val N: Int, val WIDTH: Int = 10) extends Module {
-  require(N >= 1, "N must be >= 1")
-  val idxWidth = if (N <= 1) 1 else log2Ceil(N)
+class Eval(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Module {
+  val scoreWidth = log2Up((imgWidth * imgWidth) * TPN)
 
   val io = IO(new Bundle {
-    val confScoresVec = Input(Vec(N, UInt(WIDTH.W)))
-    val valid         = Input(Bool())
-    val bestIdx       = Output(UInt(idxWidth.W))
-    val bestScore     = Output(UInt(WIDTH.W))
+    val in  = new evalIn(imgWidth, TPN, symbolN)
+    val bestIdx = Output (UInt(log2Ceil(symbolN).W))
+    val bestScore = Output(UInt(scoreWidth.W))
   })
 
-  val initScore = io.confScoresVec(0)
+  val idxWidth = log2Ceil(symbolN)
+
+  // Combinational max
+  val initScore = io.in.confScore(0)
   val initIdx   = 0.U(idxWidth.W)
 
   val (bestScoreComb, bestIdxComb) =
-    io.confScoresVec.zipWithIndex.drop(1).foldLeft((initScore, initIdx)) {
+    io.in.confScore.zipWithIndex.drop(1).foldLeft((initScore, initIdx)) {
       case ((maxScore, maxIdx), (currScore, currIdx)) =>
         val currIdxU    = currIdx.U(idxWidth.W)
         val takeCurr    = currScore > maxScore
@@ -25,17 +27,14 @@ class Eval(val N: Int, val WIDTH: Int = 10) extends Module {
         (newMaxScore, newMaxIdx)
     }
 
-  val bestScoreReg = RegInit(0.U(WIDTH.W))
+  // Registers for output
+  val bestScoreReg = RegInit(0.U(scoreWidth.W))
   val bestIdxReg   = RegInit(0.U(idxWidth.W))
 
-  when(io.valid) {
+  when(io.in.valid) {
     bestScoreReg := bestScoreComb
     bestIdxReg   := bestIdxComb
   }
-    .otherwise {
-      io.bestScore := 0.U
-      io.bestIdx   := 0.U
-    }
 
   io.bestScore := bestScoreReg
   io.bestIdx   := bestIdxReg
