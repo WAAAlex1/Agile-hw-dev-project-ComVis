@@ -80,12 +80,35 @@ object BmpUtil {
     // For showing expected outputs (usefull for testing and showcase)
     val labelFile = new PrintWriter(new File("mnist_input_labels.txt")) 
     val writer = new java.io.PrintWriter(labelFile)
+    try {
+      mH.labels.take(amount).foreach(writer.println)
+    } finally {
+      writer.close()
+    }
 
+    // each row consist of 32 bits i.e. an Int
+    val imageArray = new Array[Int](amount * width) 
+
+    // Convert each row into binary and store in imageArray
     for (i <- 0 until amount-1) {
-      writer.println(s"${mH.labels(i)}")
+      for (y <- 0 until width) {
+        var row = 0
+        for (x <- 0 until width) {
+          var pixel = mH.images(0)(y)(x) & 0xff
+          val bit = if (pixel >= threshold * 3) 1 else 0
+          row = (row << 1) | bit
+        }
+        // We write each row sequentially using i as image index
+        imageArray(i * y) = row
+      }
+    }
 
-      
-
+    val outputFile = new File("mnist_input.hex")
+    val writerHex = new java.io.PrintWriter(outputFile)
+    try {
+      imageArray.foreach(writerHex.println)
+    } finally {
+      writerHex.close()
     }
   }
 }

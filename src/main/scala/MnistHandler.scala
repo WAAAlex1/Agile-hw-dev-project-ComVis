@@ -103,7 +103,7 @@ class MnistHandler(val Path: String, val Width: Int) {
 
     for (i <- 0 until this.Width)
       for (j <- 0 until this.Width)
-        bImage.setRGB(j, i, image(i)(j) << 16 | image(i)(j) << 8 | image(i)(j))
+        bImage.setRGB(j, i, image(i)(j) << 16 | image(i)(j) << 8 | image(i)(j)) // Combine to grayscale RGB
     ImageIO.write(bImage, "bmp", new File(name + ".bmp"))
   }
 
