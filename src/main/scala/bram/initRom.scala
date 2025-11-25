@@ -27,16 +27,16 @@ class InitRom(
   val initFile: Option[String] = None
 ) extends Module {
 
-  val totalImages    = IPN * symbolN
-  val totalLines     = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
-  val addrWidth      = log2Ceil(totalLines)
-  val imgSelectWidth = log2Ceil(totalImages)
-  val lineAddrWidth  = log2Ceil(imgWidth)
+  val totalImages   = IPN * symbolN
+  val totalLines    = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
+  val addrWidth     = log2Ceil(totalLines)
+  val lineAddrWidth = log2Ceil(imgWidth)
 
   val io = IO(new Bundle {
     // Control inputs
-    val start     = Input(Bool())
-    val imgSelect = Input(UInt(imgSelectWidth.W))
+    val start       = Input(Bool())
+    val digitSelect = Input(UInt(4.W)) // Select digit 0-9
+    val imgSelect   = Input(UInt(4.W)) // Select which template (0-9) for that digit
 
     // Interface to image BRAM (write only)
     val writeOut = Flipped(new MemWrite(addrWidth, imgWidth)) //
@@ -68,12 +68,16 @@ class InitRom(
   }
   import State._
 
-  val stateReg    = RegInit(idle)
-  val lineCounter = RegInit(0.U(lineAddrWidth.W))
-  val selectedImg = RegInit(0.U(imgSelectWidth.W))
+  val stateReg      = RegInit(idle)
+  val lineCounter   = RegInit(0.U(lineAddrWidth.W))
+  val selectedDigit = RegInit(0.U(4.W))
+  val selectedImg   = RegInit(0.U(4.W))
 
-  // Calculate ROM address: baseAddr = imageIdx × imgWidth, then add line offset
-  val baseAddr = selectedImg * imgWidth.U
+  // Calculate the absolute image index: digit x IPN + imgIdx
+  val absoluteImgIdx = selectedDigit * IPN.U + selectedImg
+
+  // Calculate ROM address: baseAddr = absoluteImgIdx x imgWidth, then add line offset
+  val baseAddr = absoluteImgIdx * imgWidth.U
   val romAddr  = baseAddr + lineCounter
 
   // Asynchronous read from ROM
@@ -89,9 +93,10 @@ class InitRom(
   switch(stateReg) {
     is(idle) {
       when(io.start) {
-        selectedImg := io.imgSelect
-        lineCounter := 0.U
-        stateReg    := transferring
+        selectedDigit := io.digitSelect
+        selectedImg   := io.imgSelect
+        lineCounter   := 0.U
+        stateReg      := transferring
       }
     }
 
