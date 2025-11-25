@@ -1,9 +1,8 @@
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
-import javax.imageio.ImageIO
+package mnist
+
 import java.awt.image.BufferedImage
-import chisel3.Bool
+import java.io.{ File, IOException }
+import javax.imageio.ImageIO
 
 /* TODO:
  * - Add random selection of images
