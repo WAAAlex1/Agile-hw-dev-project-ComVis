@@ -1,5 +1,6 @@
 package mnist
 
+import java.io.FileInputStream
 import java.awt.image.BufferedImage
 import java.io.{ File, IOException }
 import javax.imageio.ImageIO
@@ -107,9 +108,6 @@ class MnistHandler(val Path: String, val Width: Int) {
   }
 
   def save10xNumber(number: Byte): Unit = {
-    this.readMnist()
-    this.readLabels()
-    this.Sort()
     val firstIndex = this.labels.indexOf(number)
     for (i <- firstIndex until firstIndex + 10)
       this.saveToBmp(this.images(i), s"mnist_${number}_${i - firstIndex}")

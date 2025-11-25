@@ -54,4 +54,5 @@ build/
 test_run_dir/
 
 /generated
+/templates/*.hex
 /genForTests
