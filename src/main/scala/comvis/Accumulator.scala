@@ -9,9 +9,6 @@ class Accumulator(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Mod
     val out = Flipped(new evalIn(imgWidth, TPN, symbolN))
   })
 
-  // TODO: Clear registers when new character is evaluated
-  // TODO: Double check interface file is correct (sliceConf should be log2Up(imgWidth) wide)?
-
   // symbolN amount of registers each "log2Up(imgWidth * imgWidth * TPN)" in width
   val accumWidth   = log2Up(imgWidth * imgWidth * TPN)
   val accumulation = RegInit(VecInit(Seq.fill(symbolN)(0.U(accumWidth.W))))
@@ -22,12 +19,11 @@ class Accumulator(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Mod
 
       accumulation(i) := accumulation(i) + tempSum
     }
-  }.otherwise {
-    accumulation := accumulation
+  }.otherwise { // Reset output value after value has been passed on
+    accumulation := VecInit(Seq.fill(symbolN)(0.U(accumWidth.W)))
   }
 
-  // Passing output values
+  // Passing output signals
   io.out.confScore := accumulation
-  io.out.valid     := RegNext(io.din.done)
-
+  io.out.valid     := io.din.done
 }

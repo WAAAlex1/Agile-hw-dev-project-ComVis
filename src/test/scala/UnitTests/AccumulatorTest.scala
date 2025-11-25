@@ -41,8 +41,6 @@ class AccumulatorTest extends AnyFlatSpec with ChiselScalatestTester {
 
         dut.io.din.done.poke(true.B)
         dut.io.din.valid.poke(false.B)
-
-        dut.clock.step(32) // Arbitrary number of cycles to see stable output
         dut.io.out.valid.expect(true.B)
 
         for (i <- 0 until symbolN) {
@@ -50,6 +48,12 @@ class AccumulatorTest extends AnyFlatSpec with ChiselScalatestTester {
           println("sumArr("+ i +"): " + sumArr(i))
           dut.io.out.confScore(i).expect(sumArr(i).U)
         }
+
+        dut.clock.step()
+        dut.io.din.done.poke(false.B)
+        dut.io.out.valid.expect(false.B)
+
+        dut.clock.step(16)
       }
   }
 }
