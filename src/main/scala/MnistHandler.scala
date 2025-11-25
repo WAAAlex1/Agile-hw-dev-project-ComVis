@@ -7,7 +7,7 @@ import chisel3.Bool
 
 /* TODO:
  * - Add random selection of images
- * - consider converting directly to binary using thresholds
+ * - consider converting directly to binary using thresholds i.e. avoid bmp files as intermediates
  */
 
 class MnistHandler(val Path: String, val Width: Int) {
@@ -89,8 +89,7 @@ class MnistHandler(val Path: String, val Width: Int) {
       labelStream.close()
   }
 
-  def countLabelOccurrences(): Map[Byte, Int] =
-    this.labels.groupBy(identity).view.mapValues(_.length).toMap
+  def countLabelOccurrences(): Map[Byte, Int] = this.labels.groupBy(identity).view.mapValues(_.length).toMap
 
   def Sort(): Unit = {
     val combined = this.labels.zip(this.images)
@@ -100,11 +99,11 @@ class MnistHandler(val Path: String, val Width: Int) {
   }
 
   def saveToBmp(image: Array[Array[Byte]], name: String): Unit = {
-    val bImage = new BufferedImage(28, 28, BufferedImage.TYPE_BYTE_GRAY)
+    val bImage = new BufferedImage(this.Width, this.Width, BufferedImage.TYPE_BYTE_GRAY)
 
-    for (i <- 0 until 28)
-      for (j <- 0 until 28)
-        bImage.setRGB(j, i, image(i)(j) << 16 | image(i)(j) << 8 | image(i)(j))
+    for (i <- 0 until this.Width)
+      for (j <- 0 until this.Width)
+        bImage.setRGB(j, i, image(i)(j) << 16 | image(i)(j) << 8 | image(i)(j)) // Combine to grayscale RGB
     ImageIO.write(bImage, "bmp", new File(name + ".bmp"))
   }
 
