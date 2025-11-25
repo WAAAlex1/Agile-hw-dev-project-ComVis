@@ -1,6 +1,7 @@
 import java.awt.image.BufferedImage
-import java.io.File
 import javax.imageio.ImageIO
+import java.io.PrintWriter
+import java.io.File
 
 object BmpUtil {
   def bmp2mem(file: File, threshold: Int): Seq[Int] = {
@@ -26,5 +27,85 @@ object BmpUtil {
       tempArray(y) = row
     }
     tempArray.toSeq // Convert output to sequence
+  }
+
+  // TODO: Should this be in the mnist folder?
+  def bmp2hexfile(input: File, threshold: Int, name: String) = {
+    // input: Input bmp file (other file formats may also work)
+    // threshold: Cutoff value for black or white pixels (0 to 255)
+    // name: Output file name (without extension)
+    // Outputs: A hex file with each line representing a row of the image
+    val path       = "./templates/"
+    val intSeq     = bmp2mem(input, threshold)
+    val outputFile = new File(name + ".hex")
+    val writer     = new java.io.PrintWriter(outputFile)
+
+    try
+      intSeq.foreach(row => writer.println(f"$row%08x"))
+    finally
+      writer.close()
+  }
+
+  // TODO: Rework this to avoid using bmp files as intermediates
+  // TODO: Should this be in the mnist folder?
+  def saveTemplates(width: Int, threshold: Int): Unit = {
+    // Utility function to handle creating hex files for all mnist templates
+    val path = "./src/main/mnist/"
+    val mH   = new MnistHandler(path, width)
+    mH.readMnist()
+    mH.Sort()
+
+    for (i <- 0 to 9) {
+      mH.save10xNumber(i.toByte)
+      for (j <- 0 until 9) {
+        val fileName  = s"mnist_${i}_${j}.bmp"
+        val inputFile = new File(fileName)
+        bmp2hexfile(inputFile, threshold, f"template_${i * 10 + j}")
+        if (!inputFile.delete()) {
+          println(s"Could not delete temporary file: $fileName")
+        }
+      }
+    }
+  }
+
+  // TODO: Rework this to avoid using bmp files as intermediates
+  // TODO: Should this be in the mnist folder?
+  def saveInputsToHex(width: Int, threshold: Int, amount: Int): Unit = {
+    // Utility function to handle creating hex files for the test inputs
+    val path = "./src/main/mnist/"
+    val mH   = new MnistHandler(path, width)
+    mH.readMnist(testImages = true)
+    mH.readLabels(testLabels = true)
+
+    // For showing expected outputs (usefull for testing and showcase)
+    val labelFile = new PrintWriter(new File("mnist_input_labels.txt"))
+    val writer    = new java.io.PrintWriter(labelFile)
+    try
+      mH.labels.take(amount).foreach(row => writer.println(f"$row%08x"))
+    finally
+      writer.close()
+
+    // each row consist of 32 bits i.e. an Int
+    val imageArray = new Array[Int](amount * width)
+
+    // Convert each row into binary and store in imageArray
+    for (i <- 0 until amount - 1)
+      for (y <- 0 until width) {
+        var row = 0
+        for (x <- 0 until width) {
+          var pixel = mH.images(0)(y)(x) & 0xff
+          val bit   = if (pixel >= threshold * 3) 1 else 0
+          row = (row << 1) | bit
+        }
+        // We write each row sequentially using i as image index
+        imageArray(i * y) = row
+      }
+
+    val outputFile = new File("mnist_input.hex")
+    val writerHex  = new java.io.PrintWriter(outputFile)
+    try
+      imageArray.foreach(row => writerHex.println(f"$row%08x"))
+    finally
+      writerHex.close()
   }
 }
