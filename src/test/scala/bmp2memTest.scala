@@ -1,4 +1,5 @@
 import chiseltest.ChiselScalatestTester
+import mnist.BmpUtil
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File

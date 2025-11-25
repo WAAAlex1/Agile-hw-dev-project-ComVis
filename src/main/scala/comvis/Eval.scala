@@ -1,6 +1,7 @@
+package comvis
+
 import chisel3._
 import chisel3.util._
-import comvis.evalIn
 
 class Eval(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Module {
   val scoreWidth = log2Up((imgWidth * imgWidth) * TPN)
@@ -9,6 +10,7 @@ class Eval(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Module {
     val in        = new evalIn(imgWidth, TPN, symbolN)
     val bestIdx   = Output(UInt(log2Ceil(symbolN).W))
     val bestScore = Output(UInt(scoreWidth.W))
+    val done      = Output(Bool())
   })
 
   val idxWidth = log2Ceil(symbolN)
@@ -30,12 +32,19 @@ class Eval(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Module {
   // Registers for output
   val bestScoreReg = RegInit(0.U(scoreWidth.W))
   val bestIdxReg   = RegInit(0.U(idxWidth.W))
+  val doneReg      = RegInit(0.U(1.W))
 
   when(io.in.valid) {
     bestScoreReg := bestScoreComb
     bestIdxReg   := bestIdxComb
+    doneReg      := 1.U
+  }.otherwise {
+    doneReg      := false.B
+    bestScoreReg := 0.U
+    bestIdxReg   := 0.U
   }
 
+  io.done      := doneReg
   io.bestScore := bestScoreReg
   io.bestIdx   := bestIdxReg
 }
