@@ -1,7 +1,8 @@
+package mnist
+
 import java.awt.image.BufferedImage
+import java.io.{ File, PrintWriter }
 import javax.imageio.ImageIO
-import java.io.PrintWriter
-import java.io.File
 
 object BmpUtil {
   def bmp2mem(file: File, threshold: Int): Seq[Int] = {
@@ -37,8 +38,12 @@ object BmpUtil {
     // Outputs: A hex file with each line representing a row of the image
     val path       = "./templates/"
     val intSeq     = bmp2mem(input, threshold)
-    val outputFile = new File(name + ".hex")
-    val writer     = new java.io.PrintWriter(outputFile)
+    val outputFile = new File(path + name + ".hex")
+
+    // Create directory if it doesn't exist
+    new File(path).mkdirs()
+
+    val writer = new java.io.PrintWriter(outputFile)
 
     try
       intSeq.foreach(row => writer.println(f"$row%08x"))
@@ -57,7 +62,7 @@ object BmpUtil {
 
     for (i <- 0 to 9) {
       mH.save10xNumber(i.toByte)
-      for (j <- 0 until 9) {
+      for (j <- 0 to 9) {
         val fileName  = s"mnist_${i}_${j}.bmp"
         val inputFile = new File(fileName)
         bmp2hexfile(inputFile, threshold, f"template_${i * 10 + j}")
