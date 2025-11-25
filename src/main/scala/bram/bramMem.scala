@@ -215,7 +215,7 @@ object BramMem24 extends App {
   emitVerilog(new ConfiguredBrams.t24x100(), Array("--target-dir", "generated"))
 
   println("\n" + "=" * 80)
-  println("Verilog generation complete!") // maybe remove?
+  println("Verilog generation complete!") // maybe remove??
 }
 
 // Instantiation for testing
