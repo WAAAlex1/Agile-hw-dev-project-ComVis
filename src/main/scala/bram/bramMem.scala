@@ -2,6 +2,7 @@ package bram
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental._ // Add this import!
 
 import comvis._
 
@@ -48,9 +49,7 @@ class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = Non
   // Initialize memory from file
   initFile match {
     case Some(file) =>
-      // Chisel supports loading from hex/bin files
-      // loadMemoryFromFile(mem, file)
-      // Note: Actual loading depends on your synthesis tool support
+      loadMemoryFromFile(mem, file) // Chisel supports loading from hex/bin files
       println(s"[BramMem] Init file specified: $file (manual loading may be required)")
     case None =>
       println(s"[BramMem] No init file - memory will be uninitialized")
@@ -216,7 +215,7 @@ object BramMem24 extends App {
   emitVerilog(new ConfiguredBrams.t24x100(), Array("--target-dir", "generated"))
 
   println("\n" + "=" * 80)
-  println("Verilog generation complete!") // maybe remove?
+  println("Verilog generation complete!") // maybe remove??
 }
 
 // Instantiation for testing
