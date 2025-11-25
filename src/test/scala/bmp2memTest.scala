@@ -3,6 +3,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
 
+import mnist.BmpUtil
+
 class bmp2memTest extends AnyFlatSpec with ChiselScalatestTester {
 
   "bmp2memTest" should "output correct Vec for given BMP" in {

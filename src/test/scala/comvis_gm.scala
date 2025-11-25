@@ -1,4 +1,5 @@
 
+import mnist.MnistHandler
 
 class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInputs: Int, val nProcessingElements: Int, val Threshold: Int) {
 
