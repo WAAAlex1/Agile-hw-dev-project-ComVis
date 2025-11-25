@@ -15,7 +15,7 @@ class SevenSegTDM(val refreshDiv: Int = 100000) extends Module {
   require(refreshDiv > 0, "Refresh divider must be positive")
 
   val io = IO(new Bundle {
-    // Input: BCD digits from decoder
+    // Input: digits from decoder
     val digits = Input(Vec(8, UInt(4.W)))
 
     // Outputs to FPGA pins (active-low)
