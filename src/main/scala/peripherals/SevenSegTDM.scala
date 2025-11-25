@@ -28,7 +28,7 @@ class SevenSegTDM(val refreshDiv: Int = 100000) extends Module {
   val divCounter   = RegInit(0.U(log2Ceil(refreshDiv + 1).W))
   val digitCounter = RegInit(0.U(3.W)) // 0-7 for 8 digits
 
-  // Refresh rate control
+  // Refresh rate control?
   val tick = divCounter === refreshDiv.U
   divCounter := Mux(tick, 0.U, divCounter + 1.U)
 
@@ -42,7 +42,7 @@ class SevenSegTDM(val refreshDiv: Int = 100000) extends Module {
   val anodeVec = Wire(Vec(8, Bool()))
   for (i <- 0 until 8)
     anodeVec(i) := (digitCounter =/= i.U) // HIGH (off) unless selected
-  io.anodes := anodeVec.asUInt
+  io.anodes     := anodeVec.asUInt
 
   // ==================== 7-SEGMENT DECODING (Active-Low) ====================
   // Get current digit to display
