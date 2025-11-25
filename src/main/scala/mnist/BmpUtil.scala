@@ -44,12 +44,10 @@ object BmpUtil {
 
       val writer = new java.io.PrintWriter(outputFile)
 
-      try {
+      try
         intSeq.foreach(row => writer.println(f"$row%08x"))
-      }
-      finally {
+      finally
         writer.close()
-      }
 
     } catch {
       case e: SecurityException               => e.printStackTrace()
@@ -118,7 +116,7 @@ object BmpUtil {
 
     val outputFile = new File("mnist_input.hex")
     val writerHex  = new java.io.PrintWriter("templates/" + outputFile)
-    
+
     try
       imageArray.foreach(row => writerHex.println(f"$row%08x"))
     finally
