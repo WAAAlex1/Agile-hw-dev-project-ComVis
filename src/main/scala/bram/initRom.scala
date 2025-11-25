@@ -27,17 +27,16 @@ class InitRom(
   val initFile: Option[String] = None
 ) extends Module {
 
-  val totalImages    = IPN * symbolN
-  val totalLines     = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
-  val addrWidth      = log2Ceil(totalLines)
-  val lineAddrWidth  = log2Ceil(imgWidth)
+  val totalImages   = IPN * symbolN
+  val totalLines    = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
+  val addrWidth     = log2Ceil(totalLines)
+  val lineAddrWidth = log2Ceil(imgWidth)
 
   val io = IO(new Bundle {
     // Control inputs
-    val start     = Input(Bool())
+    val start       = Input(Bool())
     val digitSelect = Input(UInt(4.W)) // Select digit 0-9
     val imgSelect   = Input(UInt(4.W)) // Select which template (0-9) for that digit
-
 
     // Interface to image BRAM (write only)
     val writeOut = Flipped(new MemWrite(addrWidth, imgWidth)) //
@@ -69,8 +68,8 @@ class InitRom(
   }
   import State._
 
-  val stateReg    = RegInit(idle)
-  val lineCounter = RegInit(0.U(lineAddrWidth.W))
+  val stateReg      = RegInit(idle)
+  val lineCounter   = RegInit(0.U(lineAddrWidth.W))
   val selectedDigit = RegInit(0.U(4.W))
   val selectedImg   = RegInit(0.U(4.W))
 
@@ -95,15 +94,15 @@ class InitRom(
     is(idle) {
       when(io.start) {
         selectedDigit := io.digitSelect
-        selectedImg := io.imgSelect
-        lineCounter := 0.U
-        stateReg := transferring
+        selectedImg   := io.imgSelect
+        lineCounter   := 0.U
+        stateReg      := transferring
       }
     }
 
     is(transferring) {
       // Write current line to BRAM
-      io.writeOut.wrEn := true.B
+      io.writeOut.wrEn   := true.B
       io.writeOut.wrAddr := lineCounter
       io.writeOut.wrData := romData
 
@@ -118,7 +117,7 @@ class InitRom(
     is(done) {
       // Pulse to signal rest of circuit
       io.startOut := true.B
-      stateReg := idle
+      stateReg    := idle
     }
   }
 
