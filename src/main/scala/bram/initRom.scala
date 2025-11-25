@@ -88,7 +88,7 @@ class InitRom(
   io.writeOut.wrAddr := 0.U
   io.writeOut.wrData := 0.U
   io.startOut        := false.B
-  io.busy            := (stateReg =/= idle)
+  io.busy            := stateReg === transferring
 
   switch(stateReg) {
     is(idle) {
