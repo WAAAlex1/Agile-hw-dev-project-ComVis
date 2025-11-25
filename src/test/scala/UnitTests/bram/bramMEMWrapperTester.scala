@@ -1,4 +1,4 @@
-package unit_tests.bram
+package UnitTests.bram
 
 import chisel3._
 import chiseltest._
