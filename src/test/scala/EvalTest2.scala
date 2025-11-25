@@ -1,9 +1,10 @@
 import chisel3._
 import chiseltest._
+import comvis.Eval
 import org.scalatest.flatspec.AnyFlatSpec
 
 class EvalTester2 extends AnyFlatSpec with ChiselScalatestTester {
-  behavior of "Eval"
+  behavior of "comvis.Eval"
 
   it should "find the highest confidence score for symbolN=2" in {
 
@@ -22,8 +23,6 @@ class EvalTester2 extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.in.valid.poke(true.B)
         dut.clock.step()
         dut.io.in.valid.poke(false.B)
-
-        dut.clock.step()
 
         dut.io.bestIdx.expect(expectedIdx.U)
         dut.io.bestScore.expect(expectedScore.U)

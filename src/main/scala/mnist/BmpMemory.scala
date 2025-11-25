@@ -1,7 +1,6 @@
 package mnist
 
 import chisel3._
-import chisel3.util._
 
 class BmpMemory(val data: Seq[Int], val width: Int) extends Module {
   val io = IO(new Bundle {

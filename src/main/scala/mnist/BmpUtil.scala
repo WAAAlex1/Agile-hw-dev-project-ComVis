@@ -1,9 +1,8 @@
 package mnist
 
 import java.awt.image.BufferedImage
+import java.io.{ File, PrintWriter }
 import javax.imageio.ImageIO
-import java.io.PrintWriter
-import java.io.File
 
 object BmpUtil {
   def bmp2mem(file: File, threshold: Int): Seq[Int] = {
