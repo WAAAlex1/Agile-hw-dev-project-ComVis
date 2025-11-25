@@ -39,7 +39,7 @@ class InitRom(
     val imgSelect = Input(UInt(imgSelectWidth.W))
 
     // Interface to image BRAM (write only)
-    val writeOut = Flipped( new MemWrite(addrWidth, imgWidth)) //
+    val writeOut = Flipped(new MemWrite(addrWidth, imgWidth)) //
 
     // Status outputs
     val startOut = Output(Bool())
