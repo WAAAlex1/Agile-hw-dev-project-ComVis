@@ -1,7 +1,10 @@
 import chiseltest.ChiselScalatestTester
+import mnist.BmpUtil
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
+
+import mnist.BmpUtil
 
 class bmp2memTest extends AnyFlatSpec with ChiselScalatestTester {
 

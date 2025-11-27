@@ -30,13 +30,13 @@ class conAccIn(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Bundle
   val done  = Input(Bool())
 
   // We need One vec of template results for each symbol so a nested Vec.
-  // Width needs to be log2(imgwidth^2)=11 bits for 32 width for the confidence of each template.
-  val sliceConf = Input(Vec(symbolN, Vec(TPN, UInt(log2Up(imgWidth ^ 2).W))))
+  // Width needs to be log2(imgwidth)=6 bits for 32 width for the confidence of each slice.
+  val sliceConf = Input(Vec(symbolN, Vec(TPN, UInt(log2Up(imgWidth).W))))
 }
 
 class evalIn(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Bundle {
   val valid = Input(Bool())
 
   // This should give 14bitwidth for standard parameter values.
-  val confScore = Input(Vec(symbolN, UInt(log2Up((imgWidth ^ 2) * TPN).W)))
+  val confScore = Input(Vec(symbolN, UInt(log2Up((imgWidth * imgWidth) * TPN).W)))
 }

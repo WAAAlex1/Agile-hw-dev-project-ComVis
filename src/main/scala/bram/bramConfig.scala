@@ -6,31 +6,25 @@ import chisel3._
   */
 object BramConfig {
 
-  // Standard MNIST 24x24 configuration
+  // MNIST 24x24 configuration (padding removed)
   object MnistPaddingRemoved {
-    val imageHeight       = 24 // removed padding to 24 pixels from 28
-    val imageWidth        = 24 // removed padding to 24 pixels from 28
-    val templatesPerDigit = 10
-    val numDigits         = 10
-    val totalTemplates    = templatesPerDigit * numDigits // 100
+    val imgWidth = 24 // removed padding to 24 pixels from 28
+    val TPN      = 10 // Templates Per Number
+    val symbolN  = 10 // Number of symbols (digits 0-9)
   }
 
-  // Optimized for BRAM inference (rounded to power of 2)
+  // Standard MNIST 28x28 configuration
   object MnistStandard {
-    val imageHeight       = 28 // standard 28 pixels
-    val imageWidth        = 28 // standard 28 pixels
-    val templatesPerDigit = 10
-    val numDigits         = 10
-    val totalTemplates    = templatesPerDigit * numDigits // 100
+    val imgWidth = 28 // standard 28 pixels
+    val TPN      = 10 // Templates Per Number
+    val symbolN  = 10 // Number of symbols (digits 0-9)
   }
 
-  // Smaller test configuration
+  // MNIST 32x32 configuration (padding added for better BRAM utilization)
   object MnistPaddingAdded {
-    val imageHeight       = 32 // added padding to 32 pixels from 28
-    val imageWidth        = 32 // added padding to 32 pixels from 28
-    val templatesPerDigit = 10
-    val numDigits         = 10
-    val totalTemplates    = templatesPerDigit * numDigits // 100
+    val imgWidth = 32 // added padding to 32 pixels from 28
+    val TPN      = 10 // Templates Per Number
+    val symbolN  = 10 // Number of symbols (digits 0-9)
   }
 }
 
@@ -38,30 +32,30 @@ object BramConfig {
   */
 object ConfiguredBrams {
 
-  // Standard MNIST: 100 templates, 24x24
+  // MNIST 24x24: 10 templates per digit, 10 digits
   class t24x100(initFiles: Option[Seq[String]] = None)
       extends MultiTemplateBram(
-        numTemplates = BramConfig.MnistPaddingRemoved.totalTemplates,
-        numLines = BramConfig.MnistPaddingRemoved.imageHeight,
-        lineWidth = BramConfig.MnistPaddingRemoved.imageWidth,
+        TPN = BramConfig.MnistPaddingRemoved.TPN,
+        symbolN = BramConfig.MnistPaddingRemoved.symbolN,
+        imgWidth = BramConfig.MnistPaddingRemoved.imgWidth,
         initFiles = initFiles
       )
 
-  // Small test config: 100 templates, 28x28
+  // MNIST 28x28: 10 templates per digit, 10 digits
   class t28x100(initFiles: Option[Seq[String]] = None)
       extends MultiTemplateBram(
-        numTemplates = BramConfig.MnistStandard.totalTemplates,
-        numLines = BramConfig.MnistStandard.imageHeight,
-        lineWidth = BramConfig.MnistStandard.imageWidth,
+        TPN = BramConfig.MnistStandard.TPN,
+        symbolN = BramConfig.MnistStandard.symbolN,
+        imgWidth = BramConfig.MnistStandard.imgWidth,
         initFiles = initFiles
       )
 
-  // Optimized MNIST: 100 templates, 32x32 (better BRAM utilization)
+  // MNIST 32x32: 10 templates per digit, 10 digits (better BRAM utilization)
   class t32x100(initFiles: Option[Seq[String]] = None)
       extends MultiTemplateBram(
-        numTemplates = BramConfig.MnistPaddingAdded.totalTemplates,
-        numLines = BramConfig.MnistPaddingAdded.imageHeight,
-        lineWidth = BramConfig.MnistPaddingAdded.imageWidth,
+        TPN = BramConfig.MnistPaddingAdded.TPN,
+        symbolN = BramConfig.MnistPaddingAdded.symbolN,
+        imgWidth = BramConfig.MnistPaddingAdded.imgWidth,
         initFiles = initFiles
       )
 

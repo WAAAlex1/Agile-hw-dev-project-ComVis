@@ -2,6 +2,9 @@ package bram
 
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental._ // Add this import!
+
+import comvis._
 
 /** BramMem - Core block RAM memory module
   *
@@ -15,14 +18,17 @@ import chisel3.util._
   *   Optional memory initialization file path (.hex format)
   *
   * Note on BRAM inference:
-  *   - Xilinx BRAM blocks are minimum 18Kb (RAMB18E1) or 36Kb (RAMB36E1)
+  *   - Xilinx BRAM blocks are 18Kb (RAMB18E1) or 36Kb (RAMB36E1)
   *   - For small memories like 24x24 bits (576 bits), synthesis may use LUTs instead
   */
 class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = None) extends Module {
 
+  // Depth and width requirements
   require(depth > 0, "Depth must be positive")
   require(width > 0, "Width must be positive")
   // require(isPow2(depth), "Depth should be power of 2 for optimal BRAM utilization")  TODO: THIS FAILS FOR 24x24 and 28x28 - Smarter solution or remove?
+
+  // depth sanity-check
   if (!isPow2(depth)) println(s"[BramMem] WARNING: Depth ${depth} is not power of 2 - may impact BRAM utilization")
 
   val addrWidth = log2Ceil(depth)
@@ -43,9 +49,7 @@ class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = Non
   // Initialize memory from file
   initFile match {
     case Some(file) =>
-      // Chisel supports loading from hex/bin files
-      // loadMemoryFromFile(mem, file)
-      // Note: Actual loading depends on your synthesis tool support
+      loadMemoryFromFile(mem, file) // Chisel supports loading from hex/bin files
       println(s"[BramMem] Init file specified: $file (manual loading may be required)")
     case None =>
       println(s"[BramMem] No init file - memory will be uninitialized")
@@ -94,12 +98,12 @@ class BramMemWrapper(
   val addrWidth = log2Ceil(numLines)
 
   val io = IO(new Bundle {
-// Simple read interface
+    // Simple read interface
     val lineAddr = Input(UInt(addrWidth.W))
     val lineEn   = Input(Bool())
     val lineData = Output(UInt(lineWidth.W))
 
-// Write interface (for initialization/updates), probably not needed if initialized from file.
+    // Write interface (for initialization/updates)
     val wrEn   = Input(Bool())
     val wrAddr = Input(UInt(addrWidth.W))
     val wrData = Input(UInt(lineWidth.W))
@@ -119,7 +123,6 @@ class BramMemWrapper(
 
 // Connect output
   io.lineData := bramCore.io.rdData
-
 }
 
 /** MultiTemplateBram - Example of how to instantiate multiple template memories
@@ -136,59 +139,65 @@ class BramMemWrapper(
   *   Optional list of init files (one per template), or None
   */
 class MultiTemplateBram(
-  val numTemplates: Int,
-  val numLines: Int,
-  val lineWidth: Int,
+  val TPN: Int, // Templates Per Number
+  val symbolN: Int, // Number of symbols (e.g., 10 for digits 0-9)
+  val imgWidth: Int, // Image width (and height, since square)
   val initFiles: Option[Seq[String]] = None
 ) extends Module {
 
-  val addrWidth = log2Ceil(numLines)
+  val addrWidth      = log2Ceil(imgWidth)
+  val totalTemplates = TPN * symbolN
 
   val io = IO(new Bundle {
-    // Read interface - one to all
-    val lineAddr = Input(UInt(addrWidth.W))
-    val lineEn   = Input(Bool())
-    val lineData = Output(Vec(numTemplates, UInt(lineWidth.W)))
-
-    // Write interface - one to one (specific).
-    val wrEn       = Input(Bool())
-    val wrTemplate = Input(UInt(log2Ceil(numTemplates).W))
-    val wrAddr     = Input(UInt(addrWidth.W))
-    val wrData     = Input(UInt(lineWidth.W))
+    val memIn    = new MemIn(addrWidth)
+    val memWrite = new MemWrite(addrWidth, imgWidth)
+    val memOut   = new MemOut(imgWidth, TPN, symbolN)
   })
 
-  // Instantiate multiple template memories with optional init files. Number of templates given by numTemplates.
+  // Instantiate template BRAMs (read-only, initialized from files)
   val templates = initFiles match {
-
-    // If files are given. Check correct number of files. Assign each file to each mem template by order of input.
     case Some(files) =>
-      require(files.length == numTemplates, s"Expected ${numTemplates} init files, got ${files.length}")
+      require(files.length == totalTemplates, s"Expected ${totalTemplates} init files, got ${files.length}")
       files.zipWithIndex.map { case (file, idx) =>
         println(s"[MultiTemplateBram] Template ${idx} init file: ${file}")
-        Module(new BramMemWrapper(numLines, lineWidth, Some(file)))
+        Module(new BramMemWrapper(imgWidth, imgWidth, Some(file)))
       }
-
-    // If no files are given, then no data put in memories at initialization.
     case None =>
-      Seq.fill(numTemplates)(Module(new BramMemWrapper(numLines, lineWidth, None)))
+      Seq.fill(totalTemplates)(Module(new BramMemWrapper(imgWidth, imgWidth, None)))
   }
 
-  // Connect all templates
+  // Instantiate image BRAM (read-write, no initialization)
+  val imageBram = Module(new BramMemWrapper(imgWidth, imgWidth, None))
+
+  // Connect image BRAM (read-write)
+  imageBram.io.lineAddr := io.memIn.rdAddrIdx
+  imageBram.io.lineEn   := io.memIn.rdEn
+  imageBram.io.wrEn     := io.memWrite.wrEn
+  imageBram.io.wrAddr   := io.memWrite.wrAddr
+  imageBram.io.wrData   := io.memWrite.wrData
+  io.memOut.imgData     := imageBram.io.lineData
+
+  // Connect all template BRAMs (read-only)
   for ((templateInstance, idx) <- templates.zipWithIndex) {
-    // Read path - same address to all
-    templateInstance.io.lineAddr := io.lineAddr
-    templateInstance.io.lineEn   := io.lineEn
-    io.lineData(idx)             := templateInstance.io.lineData // idx only really used here.
+    // Read path - same address to all templates
+    templateInstance.io.lineAddr := io.memIn.rdAddrIdx
+    templateInstance.io.lineEn   := io.memIn.rdEn
 
-    // Write path - only to selected template
-    templateInstance.io.wrEn   := io.wrEn && (io.wrTemplate === idx.U) // idx also used here for guiding write.
-    templateInstance.io.wrAddr := io.wrAddr
-    templateInstance.io.wrData := io.wrData
+    // Templates are read-only - disable writes
+    templateInstance.io.wrEn   := false.B
+    templateInstance.io.wrAddr := 0.U
+    templateInstance.io.wrData := 0.U
+
+    // Organize output as Vec[symbolN] of Vec[TPN]
+    val symbolIdx   = idx / TPN // Which digit (0-9)
+    val templateIdx = idx % TPN // Which template for that digit
+    io.memOut.templateData(symbolIdx)(templateIdx) := templateInstance.io.lineData
   }
 
-  println(s"[MultiTemplateBram] Created ${numTemplates} parallel template memories")
-  println(s"[MultiTemplateBram] Each: ${numLines} x ${lineWidth} bits = ${numLines * lineWidth} bits")
-  println(s"[MultiTemplateBram] Total memory: ${numTemplates * numLines * lineWidth} bits")
+  println(s"[MultiTemplateBram] Created ${totalTemplates} template memories + 1 image memory")
+  println(s"[MultiTemplateBram] Organization: ${symbolN} symbols × ${TPN} templates per symbol")
+  println(s"[MultiTemplateBram] Each: ${imgWidth} × ${imgWidth} bits = ${imgWidth * imgWidth} bits")
+  println(s"[MultiTemplateBram] Total memory: ${(totalTemplates + 1) * imgWidth * imgWidth} bits")
 }
 
 // Instantiation for testing
@@ -197,15 +206,16 @@ object BramMem24 extends App {
   println("=" * 80)
 
   // Using 24x24 configuration
-  println("\n=== (100 templates, 24x24, padding removed) ===")
+  println("\n=== (10 templates per digit, 10 digits, 24x24, padding removed) ===")
   println(
-    s"Config: ${BramConfig.MnistPaddingRemoved.totalTemplates} templates, " +
-      s"${BramConfig.MnistPaddingRemoved.imageHeight}×${BramConfig.MnistPaddingRemoved.imageWidth}"
+    s"Config: ${BramConfig.MnistPaddingRemoved.TPN} templates x " +
+      s"${BramConfig.MnistPaddingRemoved.symbolN} symbols, " +
+      s"${BramConfig.MnistPaddingRemoved.imgWidth}x${BramConfig.MnistPaddingRemoved.imgWidth}"
   )
   emitVerilog(new ConfiguredBrams.t24x100(), Array("--target-dir", "generated"))
 
   println("\n" + "=" * 80)
-  println("Verilog generation complete!")
+  println("Verilog generation complete!") // maybe remove??
 }
 
 // Instantiation for testing
@@ -214,10 +224,11 @@ object BramMem28 extends App {
   println("=" * 80)
 
   // Using 28x28 configuration
-  println("\n=== (100 templates, 28x28, standard) ===")
+  println("\n=== (10 templates per digit, 10 digits, 28x28, standard) ===")
   println(
-    s"Config: ${BramConfig.MnistStandard.totalTemplates} templates, " +
-      s"${BramConfig.MnistStandard.imageHeight}×${BramConfig.MnistStandard.imageWidth}"
+    s"Config: ${BramConfig.MnistStandard.TPN} templates x " +
+      s"${BramConfig.MnistStandard.symbolN} symbols, " +
+      s"${BramConfig.MnistStandard.imgWidth}x${BramConfig.MnistStandard.imgWidth}"
   )
   emitVerilog(new ConfiguredBrams.t28x100(), Array("--target-dir", "generated"))
 
@@ -231,10 +242,11 @@ object BramMem32 extends App {
   println("=" * 80)
 
   // Using 32x32 configuration
-  println("\n=== (100 templates, 32x32, padding added (better for BRAM?) ) ===")
+  println("\n=== (10 templates per digit, 10 digits, 32x32, padding added for better BRAM) ===")
   println(
-    s"Config: ${BramConfig.MnistPaddingAdded.totalTemplates} templates, " +
-      s"${BramConfig.MnistPaddingAdded.imageHeight}×${BramConfig.MnistPaddingAdded.imageWidth}"
+    s"Config: ${BramConfig.MnistPaddingAdded.TPN} templates x " +
+      s"${BramConfig.MnistPaddingAdded.symbolN} symbols, " +
+      s"${BramConfig.MnistPaddingAdded.imgWidth}x${BramConfig.MnistPaddingAdded.imgWidth}"
   )
   emitVerilog(new ConfiguredBrams.t32x100(), Array("--target-dir", "generated"))
 
@@ -242,14 +254,15 @@ object BramMem32 extends App {
   println("Verilog generation complete!")
 }
 
-// Instantiation for testing ( uses 28x28  )
+// Instantiation for testing ( uses 28x28 )
 object BramMemFromFiles extends App {
   println("Generating BramMem modules")
   println("=" * 80)
 
   // Using standard config WITH init files
   println("\n=== Standard MNIST with init files ===")
-  val templateFiles = (0 until BramConfig.MnistStandard.totalTemplates)
+  val totalTemplates = BramConfig.MnistStandard.TPN * BramConfig.MnistStandard.symbolN
+  val templateFiles = (0 until totalTemplates)
     .map(i => s"templates/template_${i}.hex")
   emitVerilog(new ConfiguredBrams.t28x100(Some(templateFiles)), Array("--target-dir", "generated"))
 
