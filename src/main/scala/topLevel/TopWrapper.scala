@@ -1,4 +1,3 @@
-
 package topLevel
 
 import chisel3._
@@ -39,9 +38,9 @@ class TopWrapper(
 
     // Debug outputs for testing (could be wrapped in #ifdef for synthesis)
     val debug = new Bundle {
-      val bestIdx  = Output(UInt(log2Up(symbolN).W))
-      val bestConf = Output(UInt(log2Up((imgWidth * imgWidth) * TPN + 1).W))
-      val romBusy  = Output(Bool())
+      val bestIdx     = Output(UInt(log2Up(symbolN).W))
+      val bestConf    = Output(UInt(log2Up((imgWidth * imgWidth) * TPN + 1).W))
+      val romBusy     = Output(Bool())
       val romStartOut = Output(Bool())
     }
   })
@@ -103,7 +102,7 @@ object TopWrapper extends App {
 
   // Check if files exist, only generate if missing
   val templatePath = "templates/template"
-  val imagePath = "templates/mnist_input.hex"
+  val imagePath    = "templates/mnist_input.hex"
 
   val templateDir = new java.io.File("templates")
   val needsGeneration = !templateDir.exists() ||

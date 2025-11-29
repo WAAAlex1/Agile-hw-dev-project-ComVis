@@ -58,21 +58,21 @@ class MaskerTop(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Modul
     }
     is(run) {
 
-      io.out.valid    := true.B
-      io.memOut.rdEn  := 1.U
-      sliceCnt        := sliceCnt + 1.U
-      stateReg        := run
+      io.out.valid   := true.B
+      io.memOut.rdEn := 1.U
+      sliceCnt       := sliceCnt + 1.U
+      stateReg       := run
 
       when(sliceCnt === imgWidth.U - 1.U) {
-        sliceCnt        := 0.U
-        stateReg        := done
+        sliceCnt := 0.U
+        stateReg := done
       }
     }
 
     is(done) {
-      io.out.done := true.B
-      io.out.valid:= true.B
-      stateReg    := idle
+      io.out.done  := true.B
+      io.out.valid := true.B
+      stateReg     := idle
     }
   }
 
