@@ -88,19 +88,20 @@ object BmpUtil {
     // width: Width and height of mnist images
     // threshold: Cutoff value for black or white pixels (0 to 255)
     val path = "./src/main/mnist/"
-    val mH   = new MnistHandler(path, width)
-    mH.readMnist(testImages = true)
-    mH.readLabels(testLabels = true)
+    val mH   = new MnistHandler(path, width, testInputs = true)
+    mH.readMnist()
+    mH.readLabels()
     mH.Sort()
 
     // each row consist of 32 bits i.e. an Int
-    val imageArray = new Array[Int]((10 * 10) * width)
-    var number     = 0
+    val imageArray = new Array[Int]((10 * 10) * width) // 10 numbers, 10 images each
+    var number     = -1
 
     // Convert each row into binary and store in imageArray
-    for (i <- 1 until (10 * 10)) {
+    for (i <- 0 until (10 * 10)) {
       if (i % 10 == 0) number += 1
       val idx = mH.labels.indexOf(number.toByte) + (i % 10) // Get next occurrence of the number
+      // println(f"Number: ${number}%2d, Image Index: ${idx}%4d")
 
       for (y <- 0 until width) {
         var row = 0
@@ -110,7 +111,8 @@ object BmpUtil {
           row = (row << 1) | bit
         }
         // We write each row sequentially using i as image index
-        imageArray(i * y) = row
+        imageArray(y + (i * width)) = row
+        // if (number == 0) println(f"Test: ${y + (i*width)} Image ${i}%2d, Row ${y}%2d: " + row.toBinaryString.reverse.padTo(width, '0').reverse.mkString) // For debugging
       }
     }
 
