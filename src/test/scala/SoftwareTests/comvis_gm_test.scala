@@ -1,3 +1,6 @@
+
+package SoftwareTests
+
 import org.scalatest.flatspec.AnyFlatSpec
 
 class comvis_gm_test extends AnyFlatSpec {

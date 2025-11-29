@@ -1,4 +1,4 @@
-package UnitTests
+package UnitTests.comvis
 
 import chisel3._
 import chiseltest._

@@ -1,3 +1,6 @@
+
+package SoftwareTests
+
 import chiseltest.ChiselScalatestTester
 import mnist.BmpUtil
 import org.scalatest.flatspec.AnyFlatSpec
