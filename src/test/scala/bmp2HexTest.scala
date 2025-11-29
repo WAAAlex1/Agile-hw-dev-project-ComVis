@@ -26,14 +26,14 @@ class bmp2HexTest extends AnyFlatSpec with ChiselScalatestTester {
     println("Total lines in hex file: " + count)
   }
   "saveTemplates" should "create hex files for all mnist templates" in {
-    val width     = 28
+    val width     = 32
     val threshold = 128
 
     BmpUtil.saveTemplates(width, threshold)
     println("Hex files for all mnist templates have been created.")
   }
   "saveInputsToHex" should "create hex files for all mnist test inputs" in {
-    val width     = 28
+    val width     = 32
     val threshold = 128
 
     BmpUtil.saveInputsToHex(width, threshold)
