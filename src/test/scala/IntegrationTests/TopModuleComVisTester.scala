@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
 
   "TopModule" should "find bestIdx and bestScore" in {
-    test(new TopModuleComVis(8,1,2,"minitemplate"))
+    test(new TopModuleComVis(8,1,2, "templates/minitemplate"))
       .withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
         val imgWidth = 8
         val TPN = 1

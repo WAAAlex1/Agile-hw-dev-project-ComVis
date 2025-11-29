@@ -1,5 +1,6 @@
 package mnist
 
+import java.io.FileInputStream
 import java.awt.image.BufferedImage
 import java.io.{ File, IOException }
 import javax.imageio.ImageIO
@@ -14,7 +15,7 @@ class MnistHandler(val Path: String, val Width: Int) {
   var labels: Array[Byte]               = Array.ofDim[Byte](60000)
 
   require(Width >= 20, "Width is now smaller than the MNIST numbers without padding")
-
+  // TODO: Add check for loading test vs training images
   def readMnist(testImages: Boolean = false): Unit = {
 
     var imagePath: String = ""
@@ -62,6 +63,7 @@ class MnistHandler(val Path: String, val Width: Int) {
     }
   }
 
+  // TODO: Add check for loading test vs training images
   def readLabels(testLabels: Boolean = false): Unit = {
 
     var labelPath: String = ""
@@ -107,9 +109,6 @@ class MnistHandler(val Path: String, val Width: Int) {
   }
 
   def save10xNumber(number: Byte): Unit = {
-    this.readMnist()
-    this.readLabels()
-    this.Sort()
     val firstIndex = this.labels.indexOf(number)
     for (i <- firstIndex until firstIndex + 10)
       this.saveToBmp(this.images(i), s"mnist_${number}_${i - firstIndex}")
