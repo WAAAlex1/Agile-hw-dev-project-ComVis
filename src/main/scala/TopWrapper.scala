@@ -7,13 +7,13 @@ import bram._
 import mnist.BmpUtil._
 
 class TopWrapper(
-        val imgWidth: Int,                  // Width of the image
-        val TPN: Int,                       // Templates per number (for processing)
-        val IPN: Int,                       // Images per number (for checking)
-        val symbolN: Int,                   // Number of symbols (0-9 symbolN = 10)
-        val templatePath: String,           // Path to template folder and start of name. Rest of name should be _i.hex.
-        val imagePath: Option[String]       // Total Path to image file. No restrictions on naming. Should be hex file.
-  ) extends Module {
+  val imgWidth: Int, // Width of the image
+  val TPN: Int, // Templates per number (for processing)
+  val IPN: Int, // Images per number (for checking)
+  val symbolN: Int, // Number of symbols (0-9 symbolN = 10)
+  val templatePath: String, // Path to template folder and start of name. Rest of name should be _i.hex.
+  val imagePath: Option[String] // Total Path to image file. No restrictions on naming. Should be hex file.
+) extends Module {
 
   val io = IO(new Bundle {
     val start = Input(Bool())
@@ -27,8 +27,9 @@ class TopWrapper(
   })
 
   // instantiate top module
-  val comVis = Module(new TopModuleComVis(imgWidth = imgWidth, TPN = TPN,
-                                          symbolN = symbolN, templatePath = templatePath))
+  val comVis = Module(
+    new TopModuleComVis(imgWidth = imgWidth, TPN = TPN, symbolN = symbolN, templatePath = templatePath)
+  )
 
   // seven seg
   val maxScore = (imgWidth * imgWidth) * TPN;
@@ -36,8 +37,7 @@ class TopWrapper(
   val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
 
   // instantiate memory
-  val initRom = Module(new InitRom(IPN = IPN, symbolN = symbolN,
-                                   imgWidth = imgWidth, initFile = imagePath))
+  val initRom = Module(new InitRom(IPN = IPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
 
   // debouncer
   val debouncer = Module(new Debounce())
@@ -81,11 +81,15 @@ object TopWrapper extends App {
 
   println("Generating hardware")
 
-  emitVerilog(new TopWrapper( imgWidth      = 32,
-                              TPN           = 10,
-                              IPN           = 10,
-                              symbolN       = 10,
-                              templatePath  = templatePath,
-                              imagePath     = Some(imagePath)
-  ), Array("--target-dir", "generated"))
+  emitVerilog(
+    new TopWrapper(
+      imgWidth = 32,
+      TPN = 10,
+      IPN = 10,
+      symbolN = 10,
+      templatePath = templatePath,
+      imagePath = Some(imagePath)
+    ),
+    Array("--target-dir", "generated")
+  )
 }

@@ -4,8 +4,7 @@ import bram._
 import chisel3._
 import chisel3.util._
 
-class TopModuleComVis(val imgWidth: Int, val TPN: Int, val symbolN: Int, val templatePath: String)
-    extends Module {
+class TopModuleComVis(val imgWidth: Int, val TPN: Int, val symbolN: Int, val templatePath: String) extends Module {
   val io = IO(new Bundle {
     val start    = Input(Bool())
     val memWrite = new MemWrite(log2Up(imgWidth), imgWidth)
