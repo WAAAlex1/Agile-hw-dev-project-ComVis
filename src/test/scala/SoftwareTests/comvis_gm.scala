@@ -52,10 +52,10 @@ class comvis_gm(val Path: String, val Width: Int, val nTemplates: Int, val nInpu
   }
 
   def loadInput(): Unit = {
-    val mH: MnistHandler = new MnistHandler(this.Path, this.Width)
+    val mH: MnistHandler = new MnistHandler(this.Path, this.Width, testInputs = true)
 
-    mH.readMnist(true)
-    mH.readLabels(true)
+    mH.readMnist()
+    mH.readLabels()
 
     for (i <- 0 until nInputs) {
       for (y <- 0 until this.Width) {
