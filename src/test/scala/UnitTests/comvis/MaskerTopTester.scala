@@ -42,10 +42,12 @@ class MaskerTopTester extends AnyFlatSpec with ChiselScalatestTester {
         dut.clock.step()
         dut.io.out.valid.expect(true.B)
         dut.io.out.sliceConf(0)(0).expect(expectedConfidence.U)
-        dut.clock.step(33)
-        dut.io.out.valid.expect(false.B)
+        dut.clock.step(31) // 32 clockcycles in run -> transition next clock
+        dut.io.out.valid.expect(true.B)
         dut.io.out.done.expect(true.B)
-
+        dut.clock.step()  // transitionen to idle
+        dut.io.out.valid.expect(false.B)
+        dut.io.out.done.expect(false.B)
     }
   }
 }

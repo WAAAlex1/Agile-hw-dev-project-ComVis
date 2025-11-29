@@ -1,5 +1,8 @@
+package topLevel
+
 import chisel3._
 import chisel3.util._
+import chisel3.experimental.BundleLiterals._
 
 import comvis._
 import peripherals._
@@ -12,8 +15,16 @@ class TopWrapper(
   val IPN: Int, // Images per number (for checking)
   val symbolN: Int, // Number of symbols (0-9 symbolN = 10)
   val templatePath: String, // Path to template folder and start of name. Rest of name should be _i.hex.
-  val imagePath: Option[String] // Total Path to image file. No restrictions on naming. Should be hex file.
+  val imagePath: Option[String], // Total Path to image file. No restrictions on naming. Should be hex file.
+  val debug: Boolean = false,
+  val useDebouncer: Boolean = true
 ) extends Module {
+
+  // Validate parameters at elaboration time
+  require(imgWidth > 0, "imgWidth must be positive")
+  require(TPN > 0, "TPN must be positive")
+  require(IPN > 0, "IPN must be positive")
+  require(symbolN > 0 && symbolN <= 16, "symbolN must be 1-16 (limited by wrapper)")
 
   val io = IO(new Bundle {
     val start = Input(Bool())
@@ -24,11 +35,19 @@ class TopWrapper(
     val done     = Output(Bool())
     val anodes   = Output(UInt(8.W))
     val cathodes = Output(UInt(8.W))
+
+    // Debug outputs for testing (could be wrapped in #ifdef for synthesis)
+    val debug = new Bundle {
+      val bestIdx     = Output(UInt(log2Up(symbolN).W))
+      val bestConf    = Output(UInt(log2Up((imgWidth * imgWidth) * TPN + 1).W))
+      val romBusy     = Output(Bool())
+      val romStartOut = Output(Bool())
+    }
   })
 
   // instantiate top module
   val comVis = Module(
-    new TopModuleComVis(imgWidth = imgWidth, TPN = TPN, symbolN = symbolN, templatePath = templatePath)
+    new TopModuleComVis(imgWidth = imgWidth, TPN = TPN, symbolN = symbolN, templatePath = templatePath, debug = debug)
   )
 
   // seven seg
@@ -40,11 +59,17 @@ class TopWrapper(
   val initRom = Module(new InitRom(IPN = IPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
 
   // debouncer
-  val debouncer = Module(new Debounce())
+  val startSignal = if (useDebouncer) {
+    val debouncer = Module(new Debounce())
+    debouncer.io.btn := io.start
+    debouncer.io.stable
+  } else {
+    // Direct connection for testing
+    io.start
+  }
 
   // connections
-  debouncer.io.btn       := io.start
-  initRom.io.start       := debouncer.io.stable
+  initRom.io.start       := startSignal
   initRom.io.digitSelect := io.digitSel
   initRom.io.imgSelect   := io.imgSel
 
@@ -65,22 +90,33 @@ class TopWrapper(
 
   io.done := comVis.io.done
 
+  // Debug outputs
+  io.debug.bestIdx     := comVis.io.bestIdx
+  io.debug.bestConf    := comVis.io.bestConf
+  io.debug.romBusy     := initRom.io.busy
+  io.debug.romStartOut := initRom.io.startOut
+
 }
 
 object TopWrapper extends App {
 
-  println("Generating the template files")
+  // Check if files exist, only generate if missing
+  val templatePath = "templates/template"
+  val imagePath    = "templates/mnist_input.hex"
 
-  saveTemplates(32, 128)
-  val templatePath = "templates/template" // "_i.hex omitted (generated within modules).
+  val templateDir = new java.io.File("templates")
+  val needsGeneration = !templateDir.exists() ||
+    templateDir.listFiles().length < 100
 
-  println("Generating the input files")
-
-  saveInputsToHex(32, 128)
-  val imagePath = "templates/mnist_input.hex"
+  if (needsGeneration) {
+    println("Generating template files (first-time setup)")
+    saveTemplates(32, 128)
+    saveInputsToHex(32, 128)
+  } else {
+    println("Using existing template files")
+  }
 
   println("Generating hardware")
-
   emitVerilog(
     new TopWrapper(
       imgWidth = 32,
