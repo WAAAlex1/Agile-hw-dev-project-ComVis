@@ -1,0 +1,78 @@
+package peripherals
+
+import chisel3._
+import chisel3.util._
+import comvis._
+
+class TopWrapperUART(val frequ: Int, val imgWidth: Int, val TPN: Int, val symbolN: Int, val templateStringName: String)
+    extends Module {
+
+  val io = IO(new Bundle {
+    val start = Input(Bool())
+    val rx    = Input(Bool())
+
+    val led      = Output(UInt(8.W))
+    val done     = Output(Bool())
+    val anodes   = Output(UInt(8.W))
+    val cathodes = Output(UInt(8.W))
+  })
+
+  // instantiate top module
+  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, templateStringName))
+
+  // UART loader stuff
+  val bootloader = Module(new Bootloader(frequ, 115200))
+
+  // seven seg
+  val maxScore       = imgWidth * imgWidth * TPN
+  val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
+  val debouncer      = Module(new Debounce)
+
+  // LED reg:
+  val ledReg = RegInit(0.U(8.W))
+
+  // connections
+  debouncer.io.btn := io.start
+  comVis.io.start  := io.start // TODO: Change to debouncer for synthesis
+
+  // UART and ComVis
+  comVis.io.memWrite.wrData := bootloader.io.wrData(imgWidth, 0) // Lazy bootloader fix
+  comVis.io.memWrite.wrAddr := bootloader.io.wrAddr(log2Up(imgWidth), 0) // Width translation
+  comVis.io.memWrite.wrEn   := bootloader.io.wrEn
+  bootloader.io.rx          := io.rx
+  bootloader.io.sleep       := 0.U // Default
+
+  // ComVis to SevenSeg. Label based??
+  sevenSegDriver.io.digitA     := 0.U
+  sevenSegDriver.io.digitB     := comVis.io.bestIdx
+  sevenSegDriver.io.confidence := comVis.io.bestConf
+
+  // UART Sleep logic:
+  when(bootloader.io.wrEn === 1.U) {
+    // LED Memory map
+    when(bootloader.io.wrAddr === "hF0010000".U) {
+      // Don't write to img mem when memmap
+      comVis.io.memWrite.wrEn := 0.U
+      ledReg                  := bootloader.io.wrData(7, 0)
+    }
+
+    // UART sleep memory map
+    when(bootloader.io.wrAddr === "hF1000000".U) {
+      // Don't write to img mem when memmap
+      comVis.io.memWrite.wrEn := 0.U
+      bootloader.io.sleep     := bootloader.io.wrData(0)
+    }
+  }
+
+  // outputs
+  io.anodes   := sevenSegDriver.io.anodes
+  io.cathodes := sevenSegDriver.io.cathodes
+
+  io.done := comVis.io.done
+  io.led  := ledReg
+}
+
+object TopWrapperUART extends App {
+  println("Generating the hardware")
+  emitVerilog(new TopWrapperUART(100000000, 32, 10, 10, "template"), Array("--target-dir", "generated"))
+}
