@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 class Eval(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Module {
-  val scoreWidth = log2Up((imgWidth * imgWidth) * TPN)
+  val scoreWidth = log2Up((imgWidth * imgWidth * TPN) + 1)
 
   val io = IO(new Bundle {
     val in        = new evalIn(imgWidth, TPN, symbolN)

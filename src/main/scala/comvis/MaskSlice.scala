@@ -15,5 +15,12 @@ class MaskSlice(val imgWidth: Int) extends Module {
   // io.confidence := resVec.reduceTree((x,y) => x + y)
 
   // This is a tree in hardware yippie
-  io.confidence := PopCount(~(io.maskSlice ^ io.imgSlice))
+  //io.confidence := PopCount(~(io.maskSlice ^ io.imgSlice))
+
+  val xorResult = io.maskSlice ^ io.imgSlice
+  val invResult = ~xorResult
+  //printf(p"[MaskSlice] mask=${Hexadecimal(io.maskSlice)} img=${Hexadecimal(io.imgSlice)} xor=${Hexadecimal(xorResult)} inv=${Hexadecimal(invResult)} conf=${io.confidence}\n")
+
+  io.confidence := PopCount(invResult)
+
 }

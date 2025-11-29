@@ -10,7 +10,7 @@ class Accumulator(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Mod
   })
 
   // symbolN amount of registers each "log2Up(imgWidth * imgWidth * TPN)" in width
-  val accumWidth   = log2Up(imgWidth * imgWidth * TPN)
+  val accumWidth   = log2Up((imgWidth * imgWidth * TPN) + 1)
   val accumulation = RegInit(VecInit(Seq.fill(symbolN)(0.U(accumWidth.W))))
 
   when(io.din.valid) {
@@ -25,5 +25,5 @@ class Accumulator(val imgWidth: Int, val TPN: Int, val symbolN: Int) extends Mod
 
   // Passing output signals
   io.out.confScore := accumulation
-  io.out.valid     := io.din.done
+  io.out.valid     := RegNext(io.din.done)
 }

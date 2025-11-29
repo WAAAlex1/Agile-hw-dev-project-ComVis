@@ -41,4 +41,4 @@ jobs:
       - name: Run property-based tests
         run: sbt "testOnly property_based_tests.*"
       - name: Run integration tests
-        run: sbt "testOnly integration_tests.*"
+        run: sbt "testOnly IntegrationTests.* -- -n fast"

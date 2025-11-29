@@ -21,7 +21,12 @@ import comvis._
   *   - Xilinx BRAM blocks are 18Kb (RAMB18E1) or 36Kb (RAMB36E1)
   *   - For small memories like 24x24 bits (576 bits), synthesis may use LUTs instead
   */
-class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = None) extends Module {
+class BramMem(
+               val depth: Int,
+               val width: Int,
+               val initFile: Option[String] = None,
+               val debug: Boolean = false
+             ) extends Module {
 
   // Depth and width requirements
   require(depth > 0, "Depth must be positive")
@@ -29,7 +34,7 @@ class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = Non
   // require(isPow2(depth), "Depth should be power of 2 for optimal BRAM utilization")  TODO: THIS FAILS FOR 24x24 and 28x28 - Smarter solution or remove?
 
   // depth sanity-check
-  if (!isPow2(depth)) println(s"[BramMem] WARNING: Depth ${depth} is not power of 2 - may impact BRAM utilization")
+  if(debug && !isPow2(depth)) println(s"[BramMem] WARNING: Depth ${depth} is not power of 2 - may impact BRAM utilization")
 
   val addrWidth = log2Ceil(depth)
 
@@ -49,17 +54,17 @@ class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = Non
   // Initialize memory from file
   initFile match {
     case Some(file) =>
-      loadMemoryFromFile(mem, file) // Chisel supports loading from hex/bin files
-      println(s"[BramMem] Init file specified: $file (manual loading may be required)")
+      loadMemoryFromFileInline(mem, file) // Chisel supports loading from hex/bin files
+      if(debug) println(s"[BramMem] Init file specified: $file")
     case None =>
-      println(s"[BramMem] No init file - memory will be uninitialized")
+      if(debug) println(s"[BramMem] No init file - memory will be uninitialized")
   }
 
   // Print configuration info
-  println(s"[BramMem] Configured: ${depth} x ${width}-bit = ${depth * width} bits total")
+  if(debug) println(s"[BramMem] Configured: ${depth} x ${width}-bit = ${depth * width} bits total")
   if (depth * width < 1024) {
-    println(s"[BramMem] WARNING: Memory size (${depth * width} bits) may be too small for BRAM inference")
-    println(s"[BramMem]          Consider increasing size or checking synthesis reports")
+    if(debug) println(s"[BramMem] WARNING: Memory size (${depth * width} bits) may be too small for BRAM inference")
+    if(debug) println(s"[BramMem]          Consider increasing size or checking synthesis reports")
   }
 
   // ========================= MEMORY INTERFACE ==========================================
@@ -92,7 +97,8 @@ class BramMem(val depth: Int, val width: Int, val initFile: Option[String] = Non
 class BramMemWrapper(
   val numLines: Int,
   val lineWidth: Int,
-  val initFile: Option[String] = None
+  val initFile: Option[String] = None,
+  val debug: Boolean = false
 ) extends Module {
 
   val addrWidth = log2Ceil(numLines)
@@ -110,7 +116,7 @@ class BramMemWrapper(
   })
 
 // Instantiate the core BRAM module
-  val bramCore = Module(new BramMem(numLines, lineWidth, initFile))
+  val bramCore = Module(new BramMem(numLines, lineWidth, initFile, debug))
 
 // Connect write path
   bramCore.io.wrEn   := io.wrEn
@@ -142,7 +148,8 @@ class MultiTemplateBram(
   val TPN: Int, // Templates Per Number
   val symbolN: Int, // Number of symbols (e.g., 10 for digits 0-9)
   val imgWidth: Int, // Image width (and height, since square)
-  val initFiles: Option[Seq[String]] = None
+  val initFiles: Option[Seq[String]] = None,
+  val debug: Boolean = false
 ) extends Module {
 
   val addrWidth      = log2Ceil(imgWidth)
@@ -159,15 +166,15 @@ class MultiTemplateBram(
     case Some(files) =>
       require(files.length == totalTemplates, s"Expected ${totalTemplates} init files, got ${files.length}")
       files.zipWithIndex.map { case (file, idx) =>
-        println(s"[MultiTemplateBram] Template ${idx} init file: ${file}")
-        Module(new BramMemWrapper(imgWidth, imgWidth, Some(file)))
+        if(debug) println(s"[MultiTemplateBram] Template ${idx} init file: ${file}")
+        Module(new BramMemWrapper(imgWidth, imgWidth, Some(file), debug))
       }
     case None =>
-      Seq.fill(totalTemplates)(Module(new BramMemWrapper(imgWidth, imgWidth, None)))
+      Seq.fill(totalTemplates)(Module(new BramMemWrapper(imgWidth, imgWidth, None, debug)))
   }
 
   // Instantiate image BRAM (read-write, no initialization)
-  val imageBram = Module(new BramMemWrapper(imgWidth, imgWidth, None))
+  val imageBram = Module(new BramMemWrapper(imgWidth, imgWidth, None, debug))
 
   // Connect image BRAM (read-write)
   imageBram.io.lineAddr := io.memIn.rdAddrIdx
@@ -194,10 +201,10 @@ class MultiTemplateBram(
     io.memOut.templateData(symbolIdx)(templateIdx) := templateInstance.io.lineData
   }
 
-  println(s"[MultiTemplateBram] Created ${totalTemplates} template memories + 1 image memory")
-  println(s"[MultiTemplateBram] Organization: ${symbolN} symbols × ${TPN} templates per symbol")
-  println(s"[MultiTemplateBram] Each: ${imgWidth} × ${imgWidth} bits = ${imgWidth * imgWidth} bits")
-  println(s"[MultiTemplateBram] Total memory: ${(totalTemplates + 1) * imgWidth * imgWidth} bits")
+  if(debug) println(s"[MultiTemplateBram] Created ${totalTemplates} template memories + 1 image memory")
+  if(debug) println(s"[MultiTemplateBram] Organization: ${symbolN} symbols x ${TPN} templates per symbol")
+  if(debug) println(s"[MultiTemplateBram] Each: ${imgWidth} x ${imgWidth} bits = ${imgWidth * imgWidth} bits")
+  if(debug) println(s"[MultiTemplateBram] Total memory: ${(totalTemplates + 1) * imgWidth * imgWidth} bits")
 }
 
 // Instantiation for testing
