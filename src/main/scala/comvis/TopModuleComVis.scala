@@ -4,7 +4,7 @@ import bram._
 import chisel3._
 import chisel3.util._
 
-class TopModuleComVis(val imgWidth: Int, val TPN: Int, val symbolN: Int, val templateStringName: String)
+class TopModuleComVis(val imgWidth: Int, val TPN: Int, val symbolN: Int, val templatePath: String)
     extends Module {
   val io = IO(new Bundle {
     val start    = Input(Bool())
@@ -18,7 +18,7 @@ class TopModuleComVis(val imgWidth: Int, val TPN: Int, val symbolN: Int, val tem
   val masker        = Module(new MaskerTop(imgWidth, TPN, symbolN))
   val confAccu      = Module(new Accumulator(imgWidth, TPN, symbolN))
   val evaler        = Module(new Eval(imgWidth, TPN, symbolN))
-  val templateFiles = (0 until TPN * symbolN).map(i => "templates/" + templateStringName + s"_${i}.hex")
+  val templateFiles = (0 until TPN * symbolN).map(i => templatePath + s"_${i}.hex")
   val bram          = Module(new MultiTemplateBram(TPN, symbolN, imgWidth, initFiles = Some(templateFiles)))
 
   // IO connections:
