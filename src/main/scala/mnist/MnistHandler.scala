@@ -10,17 +10,19 @@ import javax.imageio.ImageIO
  * - consider converting directly to binary using thresholds i.e. avoid bmp files as intermediates
  */
 
-class MnistHandler(val Path: String, val Width: Int) {
-  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](60000, this.Width, this.Width)
-  var labels: Array[Byte]               = Array.ofDim[Byte](60000)
+class MnistHandler(val Path: String, val Width: Int, val testInputs: Boolean = false) {
+  val nImages = if (testInputs) 10000 else 60000 // Number of images in the dataset
+  
+  var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](nImages, this.Width, this.Width)
+  var labels: Array[Byte]               = Array.ofDim[Byte](nImages)
 
   require(Width >= 20, "Width is now smaller than the MNIST numbers without padding")
   // TODO: Add check for loading test vs training images
-  def readMnist(testImages: Boolean = false): Unit = {
+  def readMnist(): Unit = {
 
     var imagePath: String = ""
 
-    if (testImages) {
+    if (this.testInputs) {
       imagePath = this.Path + "t10k-images.idx3-ubyte"
     } else {
       imagePath = this.Path + "train-images.idx3-ubyte"
@@ -30,12 +32,12 @@ class MnistHandler(val Path: String, val Width: Int) {
     val imageStream = new java.io.FileInputStream(ubyteImages)
 
     val dataBuffer  = new Array[Byte](1)
-    val mnistImages = Array.ofDim[Byte](60000, 28, 28)
+    val mnistImages = Array.ofDim[Byte](nImages, 28, 28)
 
     try {
       imageStream.skip(16) // skip header
-      for (i <- 0 until 60000)
-        for (j <- 0 until (28 * 28)) {
+      for (i <- 0 until nImages)
+        for (j <- 0 until (28 * 28)) { // 28x28 pixels since that is the MNIST standard
           imageStream.read(dataBuffer)
           val pixelVal = dataBuffer(0) & 0xff
           mnistImages(i)(j / 28)(j % 28) = pixelVal.toByte
@@ -43,14 +45,14 @@ class MnistHandler(val Path: String, val Width: Int) {
     } catch {
       case e: IOException => e.printStackTrace()
     } finally {
-      println(imageStream.available() / (28 * 28))
+      //println(imageStream.available() / (28 * 28))
       imageStream.close()
     }
 
     // Add or remove padding to match desired Width if the Width is different from 28
     if (this.Width != 28) {
       val padding = (this.Width - 28) / 2
-      for (i <- 0 until 60000)
+      for (i <- 0 until nImages)
         for (y <- 0 until this.Width)
           for (x <- 0 until this.Width)
             if (y >= padding && y < padding + 28 && x >= padding && x < padding + 28) {
@@ -64,11 +66,11 @@ class MnistHandler(val Path: String, val Width: Int) {
   }
 
   // TODO: Add check for loading test vs training images
-  def readLabels(testLabels: Boolean = false): Unit = {
+  def readLabels(): Unit = {
 
     var labelPath: String = ""
 
-    if (testLabels) {
+    if (this.testInputs) {
       labelPath = this.Path + "t10k-labels.idx1-ubyte"
     } else {
       labelPath = this.Path + "train-labels.idx1-ubyte"
@@ -80,7 +82,7 @@ class MnistHandler(val Path: String, val Width: Int) {
 
     try {
       labelStream.skip(8) // skip header
-      for (i <- 0 until 60000) {
+      for (i <- 0 until nImages) {
         labelStream.read(dataBuffer)
         this.labels(i) = dataBuffer(0)
       }
@@ -110,6 +112,7 @@ class MnistHandler(val Path: String, val Width: Int) {
 
   def save10xNumber(number: Byte): Unit = {
     val firstIndex = this.labels.indexOf(number)
+    //println(s"Saving images for number: $number starting from index: $firstIndex")
     for (i <- firstIndex until firstIndex + 10)
       this.saveToBmp(this.images(i), s"mnist_${number}_${i - firstIndex}")
   }
