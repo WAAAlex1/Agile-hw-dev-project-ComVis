@@ -100,12 +100,13 @@ object BmpUtil {
     // Convert each row into binary and store in imageArray
     for (i <- 1 until (10 * 10)) {
       if (i % 10 == 0) number += 1
-      println(s"Processing image of number: $number")
+      val idx = mH.labels.indexOf(number.toByte) + (i % 10) // Get next occurrence of the number
+
       for (y <- 0 until width) {
         var row = 0
         for (x <- 0 until width) {
-          var pixel = mH.images(0)(y)(x) & 0xff
-          val bit   = if (pixel >= threshold * 3) 1 else 0
+          var pixel = mH.images(idx)(y)(x) & 0xff
+          val bit   = if (pixel >= threshold) 1 else 0
           row = (row << 1) | bit
         }
         // We write each row sequentially using i as image index
