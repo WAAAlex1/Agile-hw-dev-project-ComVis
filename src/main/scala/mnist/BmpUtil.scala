@@ -101,7 +101,7 @@ object BmpUtil {
     for (i <- 0 until (10 * 10)) {
       if (i % 10 == 0) number += 1
       val idx = mH.labels.indexOf(number.toByte) + (i % 10) // Get next occurrence of the number
-      //println(f"Number: ${number}%2d, Image Index: ${idx}%4d")
+      // println(f"Number: ${number}%2d, Image Index: ${idx}%4d")
 
       for (y <- 0 until width) {
         var row = 0
@@ -111,18 +111,17 @@ object BmpUtil {
           row = (row << 1) | bit
         }
         // We write each row sequentially using i as image index
-        imageArray(y + (i*width)) = row
-        //if (number == 0) println(f"Test: ${y + (i*width)} Image ${i}%2d, Row ${y}%2d: " + row.toBinaryString.reverse.padTo(width, '0').reverse.mkString) // For debugging
+        imageArray(y + (i * width)) = row
+        // if (number == 0) println(f"Test: ${y + (i*width)} Image ${i}%2d, Row ${y}%2d: " + row.toBinaryString.reverse.padTo(width, '0').reverse.mkString) // For debugging
       }
     }
 
     val outputFile = new File("mnist_input.hex")
     val writerHex  = new java.io.PrintWriter("templates/" + outputFile)
 
-    try {
+    try
       imageArray.foreach(row => writerHex.println(f"$row%08x"))
-    } finally {
+    finally
       writerHex.close()
-    }
   }
 }

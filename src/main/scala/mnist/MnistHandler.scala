@@ -12,7 +12,7 @@ import javax.imageio.ImageIO
 
 class MnistHandler(val Path: String, val Width: Int, val testInputs: Boolean = false) {
   val nImages = if (testInputs) 10000 else 60000 // Number of images in the dataset
-  
+
   var images: Array[Array[Array[Byte]]] = Array.ofDim[Byte](nImages, this.Width, this.Width)
   var labels: Array[Byte]               = Array.ofDim[Byte](nImages)
 
@@ -44,10 +44,9 @@ class MnistHandler(val Path: String, val Width: Int, val testInputs: Boolean = f
         }
     } catch {
       case e: IOException => e.printStackTrace()
-    } finally {
-      //println(imageStream.available() / (28 * 28))
+    } finally
+      // println(imageStream.available() / (28 * 28))
       imageStream.close()
-    }
 
     // Add or remove padding to match desired Width if the Width is different from 28
     if (this.Width != 28) {
@@ -112,7 +111,7 @@ class MnistHandler(val Path: String, val Width: Int, val testInputs: Boolean = f
 
   def save10xNumber(number: Byte): Unit = {
     val firstIndex = this.labels.indexOf(number)
-    //println(s"Saving images for number: $number starting from index: $firstIndex")
+    // println(s"Saving images for number: $number starting from index: $firstIndex")
     for (i <- firstIndex until firstIndex + 10)
       this.saveToBmp(this.images(i), s"mnist_${number}_${i - firstIndex}")
   }
