@@ -16,5 +16,7 @@ libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.6.2"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.15" % Test
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.17.0" % Test
 
+// UART:
+libraryDependencies += "com.fazecast" % "jSerialComm" % "[2.0.0,3.0.0)"
 
 //libraryDependencies += "com.github.scalaprops" %% "scalaprops" % "0.9.1" % Test
