@@ -9,7 +9,7 @@ import bram._
  * Test for BramMemWrapper with configurable image dimensions
  * Tests 24x24, 28x28, and 32x32 configurations
  */
-class BramMemWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
+class bramMEMWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
 
   // Test configuration selection
   sealed trait TestConfig {
