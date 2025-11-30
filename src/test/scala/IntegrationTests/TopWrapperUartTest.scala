@@ -3,8 +3,8 @@ package IntegrationTests
 import chisel3._
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
-import peripherals.TopWrapperUART
 
+import topLevel._
 
 class TopWrapperUartTest extends AnyFlatSpec with
   ChiselScalatestTester {

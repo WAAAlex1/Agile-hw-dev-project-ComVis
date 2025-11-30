@@ -110,7 +110,7 @@ object TopWrapper extends App {
 
   if (needsGeneration) {
     println("Generating template files (first-time setup)")
-    saveTemplates(32, 128)
+    saveTemplates(32, 128, 10, 10)
     saveInputsToHex(32, 128)
   } else {
     println("Using existing template files")

@@ -42,18 +42,16 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     val templateFiles = (0 until config.symbolN).flatMap { digit =>
       (0 until config.TPN).map { templateIdx =>
         val absoluteIdx = digit * config.TPN + templateIdx
-        val filename = s"genForTests/comvis_template_${absoluteIdx}.hex"
+        val filename = s"genForTests/comvis_template_${digit}_${templateIdx}.hex"
         val writer = new PrintWriter(new File(filename))
 
-        // Pattern: Each digit has a unique repeating pattern
-        // Digit 0: 0x11, Digit 1: 0x22, Digit 2: 0x33, etc.
-        val pattern = ((digit + 1) * 0x11) & 0xFF
+        // Pattern: Each digit has a unique repeating pattern (just the digit itself repeated).
+        val pattern = digit
         val fullPattern = if (config.imgWidth == 8) {
           pattern
         } else {
           // For 32-bit width, repeat the pattern
-          val byte = pattern & 0xFF
-          (byte << 24) | (byte << 16) | (byte << 8) | byte
+          (pattern << 24) | (pattern << 16) | (pattern << 8) | pattern
         }
 
         try {

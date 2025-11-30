@@ -1,8 +1,10 @@
-package peripherals
+package topLevel
 
 import chisel3._
 import chisel3.util._
 import comvis._
+
+import peripherals._
 
 class TopWrapperUART(val frequ: Int, val imgWidth: Int, val TPN: Int, val symbolN: Int, val templateStringName: String)
     extends Module {

@@ -34,7 +34,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
     for (digit <- 0 until symbolN) {
       for (templateIdx <- 0 until TPN) {
         val absoluteIdx = digit * TPN + templateIdx
-        val filename = s"genForTests/debug_template_${absoluteIdx}.hex"
+        val filename = s"genForTests/debug_template_${digit}_${templateIdx}.hex"
         val writer = new PrintWriter(new File(filename))
 
         try {

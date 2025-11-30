@@ -42,7 +42,13 @@ class TopModuleComVis(
   val masker        = Module(new MaskerTop(imgWidth, TPN, symbolN))
   val confAccu      = Module(new Accumulator(imgWidth, TPN, symbolN))
   val evaler        = Module(new Eval(imgWidth, TPN, symbolN))
-  val templateFiles = (0 until TPN * symbolN).map(i => templatePath + s"_${i}.hex")
+  //val templateFiles = (0 until TPN * symbolN).map(i => templatePath + s"_${i}.hex")
+  val templateFiles = (0 until symbolN).flatMap { digit =>
+    (0 until TPN).map { templateIdx =>
+      templatePath + s"_${digit}_${templateIdx}.hex"
+    }
+  }
+
   val bram = Module(new MultiTemplateBram(TPN, symbolN, imgWidth, initFiles = Some(templateFiles), debug = debug))
 
   // IO connections:
