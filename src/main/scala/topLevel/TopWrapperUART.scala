@@ -6,8 +6,16 @@ import comvis._
 
 import peripherals._
 
-class TopWrapperUART(val frequ: Int, val imgWidth: Int, val TPN: Int, val symbolN: Int, val templateStringName: String)
-    extends Module {
+class TopWrapperUART(
+                      val frequ: Int,
+                      val imgWidth: Int,
+                      val TPN: Int,
+                      val symbolN: Int,
+                      val templateStringName: String,
+                      val debug: Boolean = false,
+                      val useDebouncer: Boolean = false,
+                      val genSim: Boolean = false
+  ) extends Module {
 
   val io = IO(new Bundle {
     val start = Input(Bool())
@@ -20,7 +28,7 @@ class TopWrapperUART(val frequ: Int, val imgWidth: Int, val TPN: Int, val symbol
   })
 
   // instantiate top module
-  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, templateStringName))
+  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, templateStringName, debug, genSim))
 
   // UART loader stuff
   val bootloader = Module(new Bootloader(frequ, 115200))
@@ -28,14 +36,21 @@ class TopWrapperUART(val frequ: Int, val imgWidth: Int, val TPN: Int, val symbol
   // seven seg
   val maxScore       = imgWidth * imgWidth * TPN
   val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
-  val debouncer      = Module(new Debounce)
+
+  val startSignal = if (useDebouncer) {
+    val debouncer = Module(new Debounce())
+    debouncer.io.btn := io.start
+    debouncer.io.stable
+  } else {
+    // Direct connection for testing
+    io.start
+  }
 
   // LED reg:
   val ledReg = RegInit(0.U(8.W))
 
   // connections
-  debouncer.io.btn := io.start
-  comVis.io.start  := io.start // TODO: Change to debouncer for synthesis
+  comVis.io.start  := startSignal
 
   // UART and ComVis
   comVis.io.memWrite.wrData := bootloader.io.wrData(imgWidth, 0) // Lazy bootloader fix
@@ -76,5 +91,5 @@ class TopWrapperUART(val frequ: Int, val imgWidth: Int, val TPN: Int, val symbol
 
 object TopWrapperUART extends App {
   println("Generating the hardware")
-  emitVerilog(new TopWrapperUART(100000000, 32, 10, 10, "template"), Array("--target-dir", "generated"))
+  emitVerilog(new TopWrapperUART(100000000, 32, 10, 10, "template", false, true, false), Array("--target-dir", "generated"))
 }

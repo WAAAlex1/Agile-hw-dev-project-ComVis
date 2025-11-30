@@ -70,7 +70,8 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       templatePath = "genForTests/debug_template",
       imagePath = Some(imageFile),
       debug = false,
-      useDebouncer = false
+      useDebouncer = false,
+      useRomForInit = false
     )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       println("\n" + "="*80)
@@ -160,7 +161,8 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       symbolN = symbolN,
       templatePath = "genForTests/debug_template",
       imagePath = Some("genForTests/debug_image.hex"),
-      useDebouncer = false
+      useDebouncer = false,
+      useRomForInit = true    // also using ROM implementation for variance
     )) { dut =>
 
       println("Processing same image twice to check accumulator reset...\n")

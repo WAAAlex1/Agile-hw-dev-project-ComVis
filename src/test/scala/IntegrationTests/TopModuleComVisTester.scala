@@ -23,7 +23,8 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
                          imgWidth: Int,
                          TPN: Int,
                          symbolN: Int,
-                         name: String
+                         name: String,
+                         useRom: Boolean
                        ) {
     val totalTemplates = TPN * symbolN
     val maxScore = imgWidth * imgWidth * TPN
@@ -78,7 +79,7 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
    *  Returns the image data as a sequence of line values
    */
   def generateTestImage(config: TestConfig, matchDigit: Int): Seq[BigInt] = {
-    val patternByte = ((matchDigit + 1) * 0x11) & 0xFF
+    val patternByte = matchDigit//((matchDigit + 1) * 0x11) & 0xFF
 
     val fullPattern: BigInt = if (config.imgWidth == 8) {
       BigInt(patternByte)
@@ -246,7 +247,8 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
       TPN = config.TPN,
       symbolN = config.symbolN,
       templatePath = templatePathBase,
-      debug = false
+      debug = true,
+      useRomForInit = config.useRom
     )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       println("\n" + "="*80)
@@ -316,28 +318,48 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     imgWidth = 8,
     TPN = 2,
     symbolN = 3,
-    name = "8x8 small (3 symbols, 2 templates)"
+    name = "8x8 small (3 symbols, 2 templates)",
+    useRom = false
   )
 
   val config8x8_full = TestConfig(
     imgWidth = 8,
     TPN = 10,
     symbolN = 10,
-    name = "8x8 full (10 symbols, 10 templates)"
+    name = "8x8 full (10 symbols, 10 templates)",
+    useRom = false
   )
 
   val config32x32_small = TestConfig(
     imgWidth = 32,
     TPN = 2,
     symbolN = 3,
-    name = "32x32 small (3 symbols, 2 templates)"
+    name = "32x32 small (3 symbols, 2 templates)",
+    useRom = false
   )
 
   val config32x32_full = TestConfig(
     imgWidth = 32,
     TPN = 10,
     symbolN = 10,
-    name = "32x32 full (10 symbols, 10 templates)"
+    name = "32x32 full (10 symbols, 10 templates)",
+    useRom = false
+  )
+
+  val config8x8_small_ROM = TestConfig(
+    imgWidth = 8,
+    TPN = 2,
+    symbolN = 3,
+    name = "8x8 small (3 symbols, 2 templates) using ROM",
+    useRom = true
+  )
+
+  val config32x32_full_ROM = TestConfig(
+    imgWidth = 32,
+    TPN = 10,
+    symbolN = 10,
+    name = "32x32 full (10 symbols, 10 templates) using ROM",
+    useRom = true
   )
 
   // ============================================================================
@@ -347,10 +369,12 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "TopModuleComVis"
 
   // Fast tests (run in CI)
-  runComVisTestTagged(config8x8_small, "verify 8x8 small config", FastTest)
+  //runComVisTestTagged(config8x8_small, "verify 8x8 small config", FastTest, false)
+  runComVisTestTagged(config8x8_small_ROM, "verify 8x8 small config using ROM", FastTest, true)
 
   // Slow tests
-  runComVisTestTagged(config8x8_full, "verify 8x8 full config", SlowTest)
-  runComVisTestTagged(config32x32_small, "verify 32x32 small config", SlowTest)
-  runComVisTestTagged(config32x32_full, "verify 32x32 full config", SlowTest)
+  runComVisTestTagged(config8x8_full, "verify 8x8 full config", SlowTest, false)
+  runComVisTestTagged(config32x32_small, "verify 32x32 small config", SlowTest, false)
+  runComVisTestTagged(config32x32_full, "verify 32x32 full config", SlowTest, false)
+  runComVisTestTagged(config32x32_full_ROM, "verify 32x32 full config using ROM", SlowTest, false)
 }

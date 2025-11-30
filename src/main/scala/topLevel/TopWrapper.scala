@@ -17,7 +17,8 @@ class TopWrapper(
   val templatePath: String, // Path to template folder and start of name. Rest of name should be _i.hex.
   val imagePath: Option[String], // Total Path to image file. No restrictions on naming. Should be hex file.
   val debug: Boolean = false,
-  val useDebouncer: Boolean = true
+  val useDebouncer: Boolean = true,
+  val useRomForInit: Boolean = false
 ) extends Module {
 
   // Validate parameters at elaboration time
@@ -47,7 +48,12 @@ class TopWrapper(
 
   // instantiate top module
   val comVis = Module(
-    new TopModuleComVis(imgWidth = imgWidth, TPN = TPN, symbolN = symbolN, templatePath = templatePath, debug = debug)
+    new TopModuleComVis(imgWidth = imgWidth,
+                        TPN = TPN,
+                        symbolN = symbolN,
+                        templatePath = templatePath,
+                        debug = debug,
+                        useRomForInit = useRomForInit)
   )
 
   // seven seg
@@ -104,27 +110,28 @@ object TopWrapper extends App {
   val templatePath = "templates/template"
   val imagePath    = "templates/mnist_input.hex"
 
-  val templateDir = new java.io.File("templates")
-  val needsGeneration = !templateDir.exists() ||
-    templateDir.listFiles().length < 100
+  val width = 32
+  val symbolN = 10
+  val TPN = 10
 
-  if (needsGeneration) {
-    println("Generating template files (first-time setup)")
-    saveTemplates(32, 128, 10, 10)
-    saveInputsToHex(32, 128)
-  } else {
-    println("Using existing template files")
-  }
+  val numImages = 10
+
+  println("Generating template files")
+  saveTemplates(width, 128, symbolN, TPN)
+  saveInputsToHex(32, 128)
 
   println("Generating hardware")
   emitVerilog(
     new TopWrapper(
-      imgWidth = 32,
-      TPN = 10,
-      IPN = 10,
-      symbolN = 10,
+      imgWidth = width,
+      TPN = TPN,
+      IPN = numImages,
+      symbolN = symbolN,
       templatePath = templatePath,
-      imagePath = Some(imagePath)
+      imagePath = Some(imagePath),
+      debug = true,
+      useDebouncer = true,
+      useRomForInit = true
     ),
     Array("--target-dir", "generated")
   )

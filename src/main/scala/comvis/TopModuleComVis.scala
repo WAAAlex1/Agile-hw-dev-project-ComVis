@@ -9,12 +9,13 @@ class TopModuleComVis(
   val TPN: Int,
   val symbolN: Int,
   val templatePath: String,
-  val debug: Boolean = false
+  val debug: Boolean = false,
+  val useRomForInit: Boolean = true
 ) extends Module {
 
   val io = IO(new Bundle {
     val start    = Input(Bool())
-    val memWrite = new MemWrite(log2Up(imgWidth), imgWidth)
+    val memWrite = new MemWrite(log2Up(imgWidth), imgWidth, symbolN * TPN + 1)
     val done     = Output(Bool())
     val bestIdx  = Output(UInt(log2Up(symbolN).W))
     val bestConf = Output(UInt(log2Up((imgWidth * imgWidth * TPN) + 1).W))
@@ -49,7 +50,11 @@ class TopModuleComVis(
     }
   }
 
-  val bram = Module(new MultiTemplateBram(TPN, symbolN, imgWidth, initFiles = Some(templateFiles), debug = debug))
+  val bram = Module(new MultiTemplateBram(TPN,
+                                          symbolN,
+                                          imgWidth,
+                                          initFiles = Some(templateFiles),
+                                          debug = debug))
 
   // IO connections:
   bram.io.memWrite <> io.memWrite
