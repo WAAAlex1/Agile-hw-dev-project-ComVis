@@ -2,7 +2,16 @@
 
 ## Introduction
 
-This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/). Computer Vision was chosen as an interesting area of work where hardware generation using Chisel could prove useful. 
+This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark (DTU) and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/). 
+Computer Vision was chosen as an interesting area of work where hardware generation using Chisel could prove useful. 
+
+### Purpose of the project
+
+The project purposefully avoids the use of machine learning algorithms and instead opts for a simple image comparison algorithm. 
+The hardware accelerator is highly parallel and modularized so it can easily be modified to implement more complex algorithms. 
+At its core, our project is a generic parallelized modular data processing accelerator that could potentially be implemented for a plethora of use-cases outside image processing.
+The project does make use of the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) database of handwritten digits for training image processing systems, even though our model doesn't require training. 
+Instead, the ROM-initialized templates are compared against the input image to calculate a confidence score for each possible digit. This could easily be expanded to include additional symbols like letters at the cost of more memory.
 
 Contributions to this project repository have been made by:
 
@@ -37,9 +46,25 @@ Everything should pass if the project has been set up correctly.
 
 ## Generating the hardware module
 
-If all tests passed, the module should be ready to generate everything.
+If all tests passed, the module should be ready to generate everything by running:
+```
+sbt run
+```
+After which you will be prompted to choose a top-level. 
+
+We have created two top-level wrappers for synthesis to an FPGA-board to choose from:
+1. **TopWrapper**, a standard top-level wrapper with input-signals to choose between different preloaded input-images.
+2. **TopWrapperUART**, a serial communication based top-level wrapper in which the input image must be sent through UART.
+
+Both top-level wrappers include output signals for displaying the identified digit and its confidence score on a seven segment display.
+
 
 ### Targeted hardware
 
-This project is designed to run on various FPGA hardware platforms. There is, however, only a constraint file for the NexusA7 provided in the [Xilinx directory](https://github.com/WAAAlex1/Agile-hw-dev-project-ComVis/tree/master/Xilinx).
+This project is designed to run on various FPGA hardware platforms. 
+There is, however, only a constraint file for the NexusA7 provided in the [Xilinx directory](https://github.com/WAAAlex1/Agile-hw-dev-project-ComVis/tree/master/Xilinx).
 
+### Dependencies
+
+The project's only dependencies are found in the [build](build.sbt) file.
+These include general scala and chisel library dependencies as well as a serial port communication library [jSerialComm](https://fazecast.github.io/jSerialComm/) that we use for sending the image over UART to the FPGA.
