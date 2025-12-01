@@ -56,7 +56,7 @@ class BramMem(
   initFile match {
     case Some(file) =>
       // Convert to absolute Windows path with forward slashes
-      val absolutePath = file // System.getProperty("user.dir").replace("\\", "/") ++ file
+      val absolutePath = file // System.getProperty("user.dir").replace("\\", "/") ++ file not used anymore
       loadMemoryFromFileInline(mem, absolutePath)
       if (debug) println(s"[BramMem ${digit}_${templateNum}] Init file: $absolutePath")
     case None =>
@@ -102,7 +102,7 @@ class BramMemSim(
   initFile.foreach(f => loadMemoryFromFileInline(mem, f))
 
   when(io.en && io.wrEn)(mem.write(io.addr, io.wrData))
-  io.rdData := 0.U
+  io.rdData                         := 0.U
   when(io.en && !io.wrEn)(io.rdData := mem.read(io.addr))
 
   if (debug) println(s"[BramMemSim ${digit}_${templateNum}] Created ${depth}x${width} simulation BRAM")
