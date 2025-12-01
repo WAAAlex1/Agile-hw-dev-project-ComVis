@@ -3,13 +3,13 @@ package IntegrationTests
 import chisel3._
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
-import peripherals.TopWrapperUART
 
+import topLevel._
 
 class TopWrapperUartTest extends AnyFlatSpec with
   ChiselScalatestTester {
   "TopWrapperUART" should "Receive 8x8 image, sleep bl, and start then finish" in {
-    test(new TopWrapperUART(10000000,8,1,2,"minitemplate"))
+    test(new TopWrapperUART(10000000,8,1,2,"templates/minitemplate", false, false))
       .withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
         val BIT_CNT = ((10000000 + 115200 / 2) / 115200 - 1)
 

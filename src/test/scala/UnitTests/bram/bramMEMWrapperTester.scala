@@ -3,8 +3,8 @@ package UnitTests.bram
 import chisel3._
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
-
 import bram._
+import chisel3.util.{Cat, log2Ceil}
 /**
  * Test for BramMemWrapper with configurable image dimensions
  * Tests 24x24, 28x28, and 32x32 configurations
@@ -51,7 +51,7 @@ class bramMEMWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
       test(new BramMemWrapper(
         numLines = config.height,
         lineWidth = config.width,
-        initFile = None
+        debug = false
       )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
         println(s"\n=== Testing BramMemWrapper ${config.name} ===")
@@ -104,8 +104,9 @@ class bramMEMWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
         println("Written memory:")
         for (line <- 0 until config.height) {
           val pattern = line << (line % 16)
+
           dut.io.wrEn.poke(true.B)
-          dut.io.wrAddr.poke(line.U)
+          dut.io.wrAddr.poke(line.U) // simple addr will do for here
           dut.io.wrData.poke(pattern.U)
           dut.clock.step(1)
         }

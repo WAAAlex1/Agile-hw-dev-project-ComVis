@@ -3,10 +3,11 @@ package UnitTests.bram
 import chisel3._
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
+
 import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Paths}
-
 import bram._
+import chisel3.util.log2Ceil
 
 class InitRomTester extends AnyFlatSpec with ChiselScalatestTester {
 
@@ -41,13 +42,16 @@ class InitRomTester extends AnyFlatSpec with ChiselScalatestTester {
     // Small test configuration
     val IPN = 2        // 2 images per digit
     val symbolN = 3    // 3 digits (0-2)
-    val imgWidth = 32   // 32x32 images
+    val imgWidth = 32  // 32x32 images
+    val TPN = 10       // 10 templates per digit
+    val imageBramIdx = TPN * symbolN
+    val lineAddrWidth = log2Ceil(imgWidth)  // = 5 bits
 
     // Generate test file
     val testFile = "genForTests/initrom_test.hex"
     generateTestFile(testFile, IPN, symbolN, imgWidth)
 
-    test(new InitRom(IPN, symbolN, imgWidth, Some(testFile)))
+    test(new InitRom(IPN, TPN, symbolN, imgWidth, Some(testFile)))
       .withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
         println("\n=== Testing InitRom ===")
@@ -76,12 +80,12 @@ class InitRomTester extends AnyFlatSpec with ChiselScalatestTester {
         val capturedData = scala.collection.mutable.ArrayBuffer[Int]()
 
         for (line <- 0 until imgWidth) {
+          val encodedAddr = (imageBramIdx << lineAddrWidth) | line
+          val expectedValue = (expectedAbsoluteIdx << 8) | line
+
           // Expect write enable and correct address
           dut.io.writeOut.wrEn.expect(true.B)
-          dut.io.writeOut.wrAddr.expect(line.U)
-
-          // Capture and verify data (pattern: (imgIdx << 8) | line)
-          val expectedValue = (expectedAbsoluteIdx << 8) | line
+          dut.io.writeOut.wrAddr.expect(encodedAddr)
           dut.io.writeOut.wrData.expect(expectedValue.U)
           capturedData += expectedValue
 

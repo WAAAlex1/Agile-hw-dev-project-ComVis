@@ -1,7 +1,6 @@
 package peripherals
 
 import chisel3._
-import chisel3.experimental.ChiselEnum
 import chisel3.util._
 
 /** Bootloader by Alexander and Georg for the Wildcat To use this new module you should first send the address through
