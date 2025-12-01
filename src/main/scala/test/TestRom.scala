@@ -18,5 +18,8 @@ class TestRom extends Module {
 }
 
 object TestRom extends App {
+
+  println(System.getProperty("user.dir"))
+
   emitVerilog(new TestRom, Array("--target-dir", "generated"))
 }

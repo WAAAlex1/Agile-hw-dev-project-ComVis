@@ -1,11 +1,12 @@
 package IntegrationTests
 
 import chisel3._
+import chisel3.util.{Cat, log2Ceil}
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.Tag
-import java.io.{File, PrintWriter}
 
+import java.io.{File, PrintWriter}
 import comvis._
 
 /**
@@ -42,7 +43,7 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     val templateFiles = (0 until config.symbolN).flatMap { digit =>
       (0 until config.TPN).map { templateIdx =>
         val absoluteIdx = digit * config.TPN + templateIdx
-        val filename = s"genForTests/comvis_template_${digit}_${templateIdx}.hex"
+        val filename = s"genForTests/comvis_template_${digit}_${templateIdx}.mem"
         val writer = new PrintWriter(new File(filename))
 
         // Pattern: Each digit has a unique repeating pattern (just the digit itself repeated).
@@ -107,8 +108,12 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     // Write image to BRAM
     println("Writing image to BRAM...")
     for ((lineData, lineIdx) <- imageData.zipWithIndex) {
+      val imageBramIdx = config.TPN * config.symbolN
+      val bramSelWidth = log2Ceil(config.TPN * config.symbolN)
+      val encodedWriteAddr = (imageBramIdx << bramSelWidth) | lineIdx
+
       dut.io.memWrite.wrEn.poke(true.B)
-      dut.io.memWrite.wrAddr.poke(lineIdx.U)
+      dut.io.memWrite.wrAddr.poke(encodedWriteAddr)  // TODO: UPDATE WITH NEW ADDR CALC
       dut.io.memWrite.wrData.poke(lineData.U)
       dut.clock.step(1)
     }
@@ -238,14 +243,24 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     println("="*80)
 
     // Generate templates
-    val templateFiles = generateTestTemplates(config)
+    generateTestTemplates(config)
     val templatePathBase = "genForTests/comvis_template"
+
+    // Build template file list and pass it to TopModuleComVis
+    val totalTemplates = config.TPN * config.symbolN
+    val templateFiles = (0 until config.symbolN).flatMap { digit =>
+      (0 until config.TPN).map { templateIdx =>
+        // matches the naming TopModuleComVis expects: template_<digit>_<templateIdx>.mem
+        templatePathBase + s"_${digit}_${templateIdx}.mem"
+      }
+    }
+
 
     test(new TopModuleComVis(
       imgWidth = config.imgWidth,
       TPN = config.TPN,
       symbolN = config.symbolN,
-      templatePath = templatePathBase,
+      initFiles = Some(templateFiles),
       debug = true
     )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 

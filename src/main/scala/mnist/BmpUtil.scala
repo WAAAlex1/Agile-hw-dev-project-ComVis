@@ -38,7 +38,7 @@ object BmpUtil {
     // Outputs: A hex file with each line representing a row of the image
     val path       = "templates/"
     val intSeq     = bmp2mem(input, threshold)
-    val outputFile = new File(path + name + ".hex")
+    val outputFile = new File(path + name + ".mem")
     try {
 
       val writer = new java.io.PrintWriter(outputFile)

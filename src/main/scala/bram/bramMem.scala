@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.loadMemoryFromFile
 import chisel3.util.experimental.loadMemoryFromFileInline
-import chisel3.stage.ChiselStage
 
 import scala.io.Source
 
@@ -47,11 +46,14 @@ class BramMem(
   // Simple SyncReadMem - no initialization, but writable
   val mem = SyncReadMem(depth, UInt(width.W))
 
-
-  // OPTIONAL initialization (synthesizes into BRAM .INIT parameters)
-  initFile.foreach { f =>
-    loadMemoryFromFile(mem, f)  // <-- USE THIS ONLY
-    if (debug) println(s"[BramMem $digit,$templateNum] Init file loaded: $f")
+  initFile match {
+    case Some(file) =>
+      // Convert to absolute Windows path with forward slashes
+      val absolutePath = file //System.getProperty("user.dir").replace("\\", "/") ++ file
+      loadMemoryFromFileInline(mem, absolutePath)
+      if (debug) println(s"[BramMem ${digit}_${templateNum}] Init file: $absolutePath")
+    case None =>
+      if(debug) println(s"[BramMem ${digit}_${templateNum}] No init file")
   }
 
   // Write
@@ -99,6 +101,7 @@ class BramMemSim(
 
   if(debug) println(s"[BramMemSim ${digit}_${templateNum}] Created ${depth}x${width} simulation BRAM")
 }
+
 /** BramMemWrapper - High-level wrapper for template storage
   *
   * Provides a clean interface for reading image templates line-by-line. Handles address generation.
@@ -140,11 +143,7 @@ class BramMemWrapper(
   })
 
   // Choose which BRAM to instantiate
-  val bramCore = if(useSim) {
-    Module(new BramMemSim(numLines, lineWidth, debug, digit, templateNum, initFile))
-  } else {
-    Module(new BramMem(numLines, lineWidth, debug, digit, templateNum, initFile))
-  }
+  val bramCore = Module(new BramMem(numLines, lineWidth, debug, digit, templateNum, initFile))
 
   bramCore.io.wrEn   := io.wrEn
   bramCore.io.wrData := io.wrData
@@ -171,10 +170,9 @@ class MultiTemplateBram(
                          val symbolN: Int,
                          val imgWidth: Int,
                          val initFiles: Option[Seq[String]] = None,
-                         val debug: Boolean = false
+                         val debug: Boolean = false,
+                         val useSim: Boolean = false
                        ) extends Module {
-
-  val isSimulation = sys.env.get("CHISEL_SIMULATION").exists(_.toBoolean)
 
   val addrWidth      = log2Ceil(imgWidth)
   val totalTemplates = TPN * symbolN
@@ -185,8 +183,6 @@ class MultiTemplateBram(
 
   // Total write address: [BRAM select bits | line address bits]
   val totalWrAddrWidth = bramSelWidth + addrWidth
-
-
 
   val io = IO(new Bundle {
     val memIn    = new MemIn(addrWidth)
@@ -206,12 +202,12 @@ class MultiTemplateBram(
 
       if (debug) println(s"[MultiTemplateBram] Creating writable template BRAM $idx")
 
-      Module(new BramMemWrapper(imgWidth, imgWidth, debug, symIdx, tpIdx, initFile, isSimulation))
+      Module(new BramMemWrapper(imgWidth, imgWidth, debug, symIdx, tpIdx, initFile, useSim))
     }
   }
 
   // Instantiate image BRAM
-  val imageBram = Module(new BramMemWrapper(imgWidth, imgWidth, debug, symbolN, TPN, None, isSimulation))
+  val imageBram = Module(new BramMemWrapper(imgWidth, imgWidth, debug, symbolN, TPN, None, useSim))
 
   // Connect write logic - each BRAM checks if it is selected
   for ((templateInstance, idx) <- templateBram.zipWithIndex) {

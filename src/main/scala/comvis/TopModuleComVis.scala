@@ -42,7 +42,6 @@ class TopModuleComVis(
   val confAccu      = Module(new Accumulator(imgWidth, TPN, symbolN))
   val evaler        = Module(new Eval(imgWidth, TPN, symbolN))
 
-
   val bram = Module(new MultiTemplateBram(TPN,
                                           symbolN,
                                           imgWidth,

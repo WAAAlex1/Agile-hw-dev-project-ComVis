@@ -50,7 +50,7 @@ class TopWrapper(
   val templateFiles = (0 until symbolN).flatMap { digit =>
     (0 until TPN).map { templateIdx =>
       // matches the naming TopModuleComVis expects: template_<digit>_<templateIdx>.hex
-      templatePath + s"_${digit}_${templateIdx}.hex"
+      templatePath + s"_${digit}_${templateIdx}.mem"
     }
   }
 
@@ -114,8 +114,8 @@ class TopWrapper(
 object TopWrapper extends App {
 
   // Check if files exist, only generate if missing
-  val templatePath = "templates/template"
-  val imagePath    = "templates/mnist_input.hex"
+  val templatePath = "template"
+  val imagePath    = "mnist_input.hex"
 
   val width = 32
   val symbolN = 10

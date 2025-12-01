@@ -43,7 +43,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
 
     val templateFiles = (0 until config.symbolN).flatMap { digit =>
       (0 until config.TPN).map { templateIdx =>
-        val filename = s"genForTests/synthetic_template_${digit}_${templateIdx}.hex"
+        val filename = s"genForTests/synthetic_template_${digit}_${templateIdx}.mem"
         val writer = new PrintWriter(new File(filename))
 
         // Pattern: Each digit has a unique repeating pattern (just the digit itself repeated).
@@ -346,7 +346,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
   runTopWrapperTestTagged(
     smallMnistConfig,
     "verify small MNIST data",
-    FastTest
+    SlowTest
   )
 
 
