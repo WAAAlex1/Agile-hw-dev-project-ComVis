@@ -28,14 +28,12 @@ The tools and setup required for this project are described in the course reposi
 ### Testing installation
 
 Before the installation can be tested, some files need to be pre-compiled first. To do this, run:
+
 ```
-example terminal code
+sbt "testOnly bmp2HexTest"
 ```
 
-That should create .bmp files. These can be converted further by running:
-```
-example terminal code
-```
+That should generate .bmp files from the templates, which can be converted into hex files.
 
 Now it is possible to run all tests:
 ```
