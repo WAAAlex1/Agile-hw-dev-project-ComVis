@@ -125,3 +125,25 @@ object BmpUtil {
       writerHex.close()
   }
 }
+
+object Main {
+  def main(args: Array[String]): Unit = {
+    val path = "templates/"
+
+    for (i <- 0 until 10)
+      for (j <- 0 until 10) {
+        println(path + "templates_0/" + f"template_${i}_${j}.bmp")
+        BmpUtil.bmp2hexfile(
+          new File(path + "templates_0/" + f"template_${i}_${j}.bmp"),
+          128,
+          f"templates_0/template_${i}_${j}"
+        )
+        BmpUtil.bmp2hexfile(
+          new File(path + "templates_1/" + f"template_${i}_${j}.bmp"),
+          128,
+          f"templates_1/template_${i}_${j}"
+        )
+      }
+
+  }
+}
