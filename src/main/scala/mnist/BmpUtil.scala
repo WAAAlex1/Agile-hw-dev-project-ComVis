@@ -73,9 +73,9 @@ object BmpUtil {
         val fileName  = s"mnist_${i}_${j}.bmp"
         val inputFile = new File(fileName)
         bmp2hexfile(inputFile, threshold, f"template_${i}_${j}")
-        //if (!inputFile.delete()) {
+        // if (!inputFile.delete()) {
         //  println(s"Could not delete temporary file: $fileName")
-        //}
+        // }
       }
     }
   }

@@ -56,12 +56,14 @@ class TopWrapper(
 
   // instantiate top module
   val comVis = Module(
-    new TopModuleComVis(imgWidth = imgWidth,
-                        TPN = TPN,
-                        symbolN = symbolN,
-                        initFiles = Some(templateFiles),
-                        debug = debug
-    ))
+    new TopModuleComVis(
+      imgWidth = imgWidth,
+      TPN = TPN,
+      symbolN = symbolN,
+      initFiles = Some(templateFiles),
+      debug = debug
+    )
+  )
 
   // seven seg
   val maxScore = (imgWidth * imgWidth) * TPN;
@@ -117,9 +119,9 @@ object TopWrapper extends App {
   val templatePath = "template"
   val imagePath    = "mnist_input.hex"
 
-  val width = 32
+  val width   = 32
   val symbolN = 10
-  val TPN = 10
+  val TPN     = 10
 
   val numImages = 10
 
@@ -127,16 +129,9 @@ object TopWrapper extends App {
   saveTemplates(width, 128, symbolN, TPN)
   saveInputsToHex(32, 128)
 
-  /**
-   * println("Generating COE files for BRAM initialization")
-   * bramUtil.generateAllTemplateCoe(
-     * numDigits = 10,
-     * TPN = 10,
-     * imgWidth = 32,
-     * hexBasePath = "templates/template",
-     * coeOutputDir = "generated/coe"
-   * )
-  */
+  /** println("Generating COE files for BRAM initialization") bramUtil.generateAllTemplateCoe( numDigits = 10, TPN = 10,
+    * imgWidth = 32, hexBasePath = "templates/template", coeOutputDir = "generated/coe" )
+    */
 
   println("Generating hardware")
   emitVerilog(

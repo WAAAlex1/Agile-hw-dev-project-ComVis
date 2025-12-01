@@ -8,31 +8,38 @@ import chisel3.util.experimental.loadMemoryFromFileInline
 import scala.io.Source
 
 import comvis._
+
 /** BramMem - Core block RAM memory module
- *
- * @param depth Number of addressable locations
- * @param width Bits per location
- * @param initFile Optional memory initialization file path (.hex format)
- * @param debug Enable debug output
- * @param uniqueId Unique identifier to prevent deduplication
- * @param useRomForInit If true, use ROM implementation for initialized memories (synthesis-friendly)
- *                      If false, use SyncReadMem with loadMemoryFromFileInline (simulation-only init)
- */
+  *
+  * @param depth
+  *   Number of addressable locations
+  * @param width
+  *   Bits per location
+  * @param initFile
+  *   Optional memory initialization file path (.hex format)
+  * @param debug
+  *   Enable debug output
+  * @param uniqueId
+  *   Unique identifier to prevent deduplication
+  * @param useRomForInit
+  *   If true, use ROM implementation for initialized memories (synthesis-friendly) If false, use SyncReadMem with
+  *   loadMemoryFromFileInline (simulation-only init)
+  */
 class BramMem(
-               val depth: Int,
-               val width: Int,
-               val debug: Boolean = false,
-               val digit: Int = 0,
-               val templateNum: Int = 0,
-               val initFile: Option[String] = None
-             ) extends Module {
+  val depth: Int,
+  val width: Int,
+  val debug: Boolean = false,
+  val digit: Int = 0,
+  val templateNum: Int = 0,
+  val initFile: Option[String] = None
+) extends Module {
 
   require(depth > 0, "Depth must be positive")
   require(width > 0, "Width must be positive")
 
   if (debug && !isPow2(depth)) println(s"[BramMem] WARNING: Depth ${depth} is not power of 2")
 
-  val addrWidth = log2Ceil(depth)
+  val addrWidth            = log2Ceil(depth)
   override def desiredName = s"BramMem_${digit}_${templateNum}"
 
   val io = IO(new Bundle {
@@ -49,11 +56,11 @@ class BramMem(
   initFile match {
     case Some(file) =>
       // Convert to absolute Windows path with forward slashes
-      val absolutePath = file //System.getProperty("user.dir").replace("\\", "/") ++ file
+      val absolutePath = file // System.getProperty("user.dir").replace("\\", "/") ++ file
       loadMemoryFromFileInline(mem, absolutePath)
       if (debug) println(s"[BramMem ${digit}_${templateNum}] Init file: $absolutePath")
     case None =>
-      if(debug) println(s"[BramMem ${digit}_${templateNum}] No init file")
+      if (debug) println(s"[BramMem ${digit}_${templateNum}] No init file")
   }
 
   // Write
@@ -70,16 +77,15 @@ class BramMem(
   if (debug) println(s"[BramMem ${digit}_${templateNum}] Created ${depth} x ${width}-bit SyncReadMem")
 }
 
-
 class BramMemSim(
-                  val depth: Int,
-                  val width: Int,
-                  val debug: Boolean = false,
-                  val digit: Int = 0,
-                  val templateNum: Int = 0,
-                  val initFile: Option[String] = None
-                ) extends Module {
-  val addrWidth = log2Ceil(depth)
+  val depth: Int,
+  val width: Int,
+  val debug: Boolean = false,
+  val digit: Int = 0,
+  val templateNum: Int = 0,
+  val initFile: Option[String] = None
+) extends Module {
+  val addrWidth            = log2Ceil(depth)
   override def desiredName = s"BramMemSim_${digit}_${templateNum}"
 
   val io = IO(new Bundle {
@@ -95,11 +101,11 @@ class BramMemSim(
   // Simulation initialization
   initFile.foreach(f => loadMemoryFromFileInline(mem, f))
 
-  when(io.en && io.wrEn) { mem.write(io.addr, io.wrData) }
+  when(io.en && io.wrEn)(mem.write(io.addr, io.wrData))
   io.rdData := 0.U
-  when(io.en && !io.wrEn) { io.rdData := mem.read(io.addr) }
+  when(io.en && !io.wrEn)(io.rdData := mem.read(io.addr))
 
-  if(debug) println(s"[BramMemSim ${digit}_${templateNum}] Created ${depth}x${width} simulation BRAM")
+  if (debug) println(s"[BramMemSim ${digit}_${templateNum}] Created ${depth}x${width} simulation BRAM")
 }
 
 /** BramMemWrapper - High-level wrapper for template storage
@@ -120,14 +126,14 @@ class BramMemSim(
   *   true = ROM, false = syncReadMem BRAM
   */
 class BramMemWrapper(
-                      val numLines: Int,
-                      val lineWidth: Int,
-                      val debug: Boolean = false,
-                      val digit: Int = 0,
-                      val templateNum: Int = 0,
-                      val initFile: Option[String] = None,
-                      val useSim: Boolean = true
-                    ) extends Module {
+  val numLines: Int,
+  val lineWidth: Int,
+  val debug: Boolean = false,
+  val digit: Int = 0,
+  val templateNum: Int = 0,
+  val initFile: Option[String] = None,
+  val useSim: Boolean = true
+) extends Module {
 
   override def desiredName = s"BramMemWrapper_${digit}_${templateNum}"
 
@@ -147,9 +153,9 @@ class BramMemWrapper(
 
   bramCore.io.wrEn   := io.wrEn
   bramCore.io.wrData := io.wrData
-  bramCore.io.addr := Mux(io.wrEn, io.wrAddr, io.lineAddr)
-  bramCore.io.en   := io.lineEn || io.wrEn
-  io.lineData := bramCore.io.rdData
+  bramCore.io.addr   := Mux(io.wrEn, io.wrAddr, io.lineAddr)
+  bramCore.io.en     := io.lineEn || io.wrEn
+  io.lineData        := bramCore.io.rdData
 }
 
 /** MultiTemplateBram - Example of how to instantiate multiple template memories
@@ -166,17 +172,17 @@ class BramMemWrapper(
   *   Optional list of init files (one per template), or None
   */
 class MultiTemplateBram(
-                         val TPN: Int,
-                         val symbolN: Int,
-                         val imgWidth: Int,
-                         val initFiles: Option[Seq[String]] = None,
-                         val debug: Boolean = false,
-                         val useSim: Boolean = false
-                       ) extends Module {
+  val TPN: Int,
+  val symbolN: Int,
+  val imgWidth: Int,
+  val initFiles: Option[Seq[String]] = None,
+  val debug: Boolean = false,
+  val useSim: Boolean = false
+) extends Module {
 
   val addrWidth      = log2Ceil(imgWidth)
   val totalTemplates = TPN * symbolN
-  val totalBrams     = totalTemplates + 1  // templates + image BRAM
+  val totalBrams     = totalTemplates + 1 // templates + image BRAM
 
   // Address bits needed to select which BRAM
   val bramSelWidth = log2Ceil(totalBrams)
@@ -186,18 +192,18 @@ class MultiTemplateBram(
 
   val io = IO(new Bundle {
     val memIn    = new MemIn(addrWidth)
-    val memWrite = new MemWrite(totalWrAddrWidth, imgWidth, totalBrams)  // Updated
+    val memWrite = new MemWrite(totalWrAddrWidth, imgWidth, totalBrams) // Updated
     val memOut   = new MemOut(imgWidth, TPN, symbolN)
   })
 
   // Decode write address
-  val wrBramSel = io.memWrite.wrAddr(totalWrAddrWidth - 1, addrWidth)  // Upper bits
-  val wrLineAddr = io.memWrite.wrAddr(addrWidth - 1, 0)                 // Lower bits
+  val wrBramSel  = io.memWrite.wrAddr(totalWrAddrWidth - 1, addrWidth) // Upper bits
+  val wrLineAddr = io.memWrite.wrAddr(addrWidth - 1, 0) // Lower bits
 
   // Instantiate template BRAMs
   val templateBram = (0 until symbolN).flatMap { symIdx =>
     (0 until TPN).map { tpIdx =>
-      val idx = symIdx * TPN + tpIdx
+      val idx      = symIdx * TPN + tpIdx
       val initFile = initFiles.map(_(idx))
 
       if (debug) println(s"[MultiTemplateBram] Creating writable template BRAM $idx")
@@ -233,7 +239,10 @@ class MultiTemplateBram(
   io.memOut.imgData     := imageBram.io.lineData
 
   if (debug) println(s"[MultiTemplateBram] Created ${totalTemplates} writable template BRAMs + 1 image BRAM")
-  if (debug) println(s"[MultiTemplateBram] Write address: ${totalWrAddrWidth} bits [${bramSelWidth} BRAM sel | ${addrWidth} line addr]")
+  if (debug)
+    println(
+      s"[MultiTemplateBram] Write address: ${totalWrAddrWidth} bits [${bramSelWidth} BRAM sel | ${addrWidth} line addr]"
+    )
 }
 
 // Instantiation for testing

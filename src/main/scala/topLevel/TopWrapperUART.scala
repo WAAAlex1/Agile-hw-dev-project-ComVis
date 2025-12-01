@@ -7,14 +7,14 @@ import comvis._
 import peripherals._
 
 class TopWrapperUART(
-                      val frequ: Int,
-                      val imgWidth: Int,
-                      val TPN: Int,
-                      val symbolN: Int,
-                      val templatePath: String,
-                      val debug: Boolean = false,
-                      val useDebouncer: Boolean = false
-  ) extends Module {
+  val frequ: Int,
+  val imgWidth: Int,
+  val TPN: Int,
+  val symbolN: Int,
+  val templatePath: String,
+  val debug: Boolean = false,
+  val useDebouncer: Boolean = false
+) extends Module {
 
   val io = IO(new Bundle {
     val start = Input(Bool())
@@ -58,7 +58,7 @@ class TopWrapperUART(
   val ledReg = RegInit(0.U(8.W))
 
   // connections
-  comVis.io.start  := startSignal
+  comVis.io.start := startSignal
 
   // UART and ComVis
   comVis.io.memWrite.wrData := bootloader.io.wrData(imgWidth - 1, 0) // Lazy bootloader fix
@@ -99,5 +99,8 @@ class TopWrapperUART(
 
 object TopWrapperUART extends App {
   println("Generating the hardware")
-  emitVerilog(new TopWrapperUART(100000000, 32, 10, 10, "templates/template", false, true), Array("--target-dir", "generated"))
+  emitVerilog(
+    new TopWrapperUART(100000000, 32, 10, 10, "templates/template", false, true),
+    Array("--target-dir", "generated")
+  )
 }

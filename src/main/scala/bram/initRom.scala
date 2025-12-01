@@ -7,37 +7,37 @@ import chisel3.util.experimental.loadMemoryFromFileInline
 import comvis._
 
 /** InitRom - ROM containing test images with transfer controller
- *
- * Stores multiple test images in a single memory and transfers selected image to image BRAM line-by-line when start
- * signal is asserted.
- *
- * @param IPN
- *   Images per number
- * @param TPN
- *   Templates per number
- * @param symbolN
- *   Number of symbols (digits 0-9)
- * @param imgWidth
- *   Image width (and height, since square)
- * @param initFile
- *   Single hex file with all images concatenated
- */
+  *
+  * Stores multiple test images in a single memory and transfers selected image to image BRAM line-by-line when start
+  * signal is asserted.
+  *
+  * @param IPN
+  *   Images per number
+  * @param TPN
+  *   Templates per number
+  * @param symbolN
+  *   Number of symbols (digits 0-9)
+  * @param imgWidth
+  *   Image width (and height, since square)
+  * @param initFile
+  *   Single hex file with all images concatenated
+  */
 class InitRom(
-               val IPN: Int,
-               val TPN: Int,
-               val symbolN: Int,
-               val imgWidth: Int,
-               val initFile: Option[String] = None
-             ) extends Module {
+  val IPN: Int,
+  val TPN: Int,
+  val symbolN: Int,
+  val imgWidth: Int,
+  val initFile: Option[String] = None
+) extends Module {
 
-  val totalImages   = IPN * symbolN
-  val totalLines    = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
-  val totalBrams    = TPN * symbolN + 1      // 100 template BRAMs + 1 image BRAM = 101 total
-  val imageBramIdx  = TPN * symbolN          // Image BRAM is at index 100 (after all templates)
+  val totalImages  = IPN * symbolN
+  val totalLines   = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
+  val totalBrams   = TPN * symbolN + 1 // 100 template BRAMs + 1 image BRAM = 101 total
+  val imageBramIdx = TPN * symbolN // Image BRAM is at index 100 (after all templates)
 
-  val lineAddrWidth = log2Ceil(imgWidth)
-  val bramSelWidth  = log2Ceil(totalBrams)
-  val totalWrAddrWidth = bramSelWidth + lineAddrWidth  // Full encoded address width
+  val lineAddrWidth    = log2Ceil(imgWidth)
+  val bramSelWidth     = log2Ceil(totalBrams)
+  val totalWrAddrWidth = bramSelWidth + lineAddrWidth // Full encoded address width
 
   val io = IO(new Bundle {
     // Control inputs

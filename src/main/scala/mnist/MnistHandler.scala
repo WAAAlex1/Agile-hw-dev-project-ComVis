@@ -109,7 +109,7 @@ class MnistHandler(val Path: String, val Width: Int, val testInputs: Boolean = f
     ImageIO.write(bImage, "bmp", new File(name + ".bmp"))
   }
 
-  def saveXNumbers(digit: Byte, number: Int=10): Unit = {
+  def saveXNumbers(digit: Byte, number: Int = 10): Unit = {
     val firstIndex = this.labels.indexOf(digit)
     // println(s"Saving images for number: $number starting from index: $firstIndex")
     for (i <- firstIndex until firstIndex + number)

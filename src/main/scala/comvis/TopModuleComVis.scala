@@ -9,7 +9,8 @@ class TopModuleComVis(
   val TPN: Int,
   val symbolN: Int,
   val initFiles: Option[Seq[String]] = None,
-  val debug: Boolean = false) extends Module {
+  val debug: Boolean = false
+) extends Module {
 
   val io = IO(new Bundle {
     val start    = Input(Bool())
@@ -38,15 +39,11 @@ class TopModuleComVis(
   })
 
   // Modules:
-  val masker        = Module(new MaskerTop(imgWidth, TPN, symbolN))
-  val confAccu      = Module(new Accumulator(imgWidth, TPN, symbolN))
-  val evaler        = Module(new Eval(imgWidth, TPN, symbolN))
+  val masker   = Module(new MaskerTop(imgWidth, TPN, symbolN))
+  val confAccu = Module(new Accumulator(imgWidth, TPN, symbolN))
+  val evaler   = Module(new Eval(imgWidth, TPN, symbolN))
 
-  val bram = Module(new MultiTemplateBram(TPN,
-                                          symbolN,
-                                          imgWidth,
-                                          initFiles = initFiles,
-                                          debug = debug))
+  val bram = Module(new MultiTemplateBram(TPN, symbolN, imgWidth, initFiles = initFiles, debug = debug))
 
   // IO connections:
   bram.io.memWrite <> io.memWrite

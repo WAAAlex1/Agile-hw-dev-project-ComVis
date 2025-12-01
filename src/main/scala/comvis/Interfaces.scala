@@ -20,7 +20,7 @@ class MemIn(val addrWidth: Int) extends Bundle {
 }
 
 class MemWrite(val addrWidth: Int, val imgWidth: Int, val totalBrams: Int) extends Bundle {
-  val wrEn   = Input(Bool())
+  val wrEn = Input(Bool())
   // Upper bits select BRAM, lower bits select line within BRAM
   val wrAddr = Input(UInt((addrWidth + log2Ceil(totalBrams + 1)).W))
   val wrData = Input(UInt(imgWidth.W))
