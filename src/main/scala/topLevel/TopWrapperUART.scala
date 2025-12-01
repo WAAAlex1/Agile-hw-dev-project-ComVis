@@ -11,10 +11,9 @@ class TopWrapperUART(
                       val imgWidth: Int,
                       val TPN: Int,
                       val symbolN: Int,
-                      val templateStringName: String,
+                      val templatePath: String,
                       val debug: Boolean = false,
-                      val useDebouncer: Boolean = false,
-                      val genSim: Boolean = false
+                      val useDebouncer: Boolean = false
   ) extends Module {
 
   val io = IO(new Bundle {
@@ -27,8 +26,17 @@ class TopWrapperUART(
     val cathodes = Output(UInt(8.W))
   })
 
+  // Build template file list and pass it to TopModuleComVis
+  val totalTemplates = TPN * symbolN
+  val templateFiles = (0 until symbolN).flatMap { digit =>
+    (0 until TPN).map { templateIdx =>
+      // matches the naming TopModuleComVis expects: template_<digit>_<templateIdx>.hex
+      templatePath + s"_${digit}_${templateIdx}.hex"
+    }
+  }
+
   // instantiate top module
-  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, templateStringName, debug, genSim))
+  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, Some(templateFiles), debug))
 
   // UART loader stuff
   val bootloader = Module(new Bootloader(frequ, 115200))
@@ -91,5 +99,5 @@ class TopWrapperUART(
 
 object TopWrapperUART extends App {
   println("Generating the hardware")
-  emitVerilog(new TopWrapperUART(100000000, 32, 10, 10, "template", false, true, false), Array("--target-dir", "generated"))
+  emitVerilog(new TopWrapperUART(100000000, 32, 10, 10, "templates/template", false, true), Array("--target-dir", "generated"))
 }

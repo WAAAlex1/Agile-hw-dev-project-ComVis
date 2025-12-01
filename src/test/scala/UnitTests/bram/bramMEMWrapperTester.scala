@@ -50,8 +50,8 @@ class bramMEMWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     it should s"write and read data correctly (${config.name})" in {
       test(new BramMemWrapper(
         numLines = config.height,
-        lineWidth = config.width,
-        initFile = None
+        lineWidth = config.width//,
+        //initFile = None
       )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
         println(s"\n=== Testing BramMemWrapper ${config.name} ===")

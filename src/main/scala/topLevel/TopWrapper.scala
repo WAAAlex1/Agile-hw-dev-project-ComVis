@@ -17,8 +17,7 @@ class TopWrapper(
   val templatePath: String, // Path to template folder and start of name. Rest of name should be _i.hex.
   val imagePath: Option[String], // Total Path to image file. No restrictions on naming. Should be hex file.
   val debug: Boolean = false,
-  val useDebouncer: Boolean = true,
-  val useRomForInit: Boolean = false
+  val useDebouncer: Boolean = true
 ) extends Module {
 
   // Validate parameters at elaboration time
@@ -46,15 +45,23 @@ class TopWrapper(
     }
   })
 
+  // Build template file list and pass it to TopModuleComVis
+  val totalTemplates = TPN * symbolN
+  val templateFiles = (0 until symbolN).flatMap { digit =>
+    (0 until TPN).map { templateIdx =>
+      // matches the naming TopModuleComVis expects: template_<digit>_<templateIdx>.hex
+      templatePath + s"_${digit}_${templateIdx}.hex"
+    }
+  }
+
   // instantiate top module
   val comVis = Module(
     new TopModuleComVis(imgWidth = imgWidth,
                         TPN = TPN,
                         symbolN = symbolN,
-                        templatePath = templatePath,
-                        debug = debug,
-                        useRomForInit = useRomForInit)
-  )
+                        initFiles = Some(templateFiles),
+                        debug = debug
+    ))
 
   // seven seg
   val maxScore = (imgWidth * imgWidth) * TPN;
@@ -62,7 +69,7 @@ class TopWrapper(
   val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
 
   // instantiate memory
-  val initRom = Module(new InitRom(IPN = IPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
+  val initRom = Module(new InitRom(IPN = IPN, TPN = TPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
 
   // debouncer
   val startSignal = if (useDebouncer) {
@@ -120,6 +127,17 @@ object TopWrapper extends App {
   saveTemplates(width, 128, symbolN, TPN)
   saveInputsToHex(32, 128)
 
+  /**
+   * println("Generating COE files for BRAM initialization")
+   * bramUtil.generateAllTemplateCoe(
+     * numDigits = 10,
+     * TPN = 10,
+     * imgWidth = 32,
+     * hexBasePath = "templates/template",
+     * coeOutputDir = "generated/coe"
+   * )
+  */
+
   println("Generating hardware")
   emitVerilog(
     new TopWrapper(
@@ -130,8 +148,7 @@ object TopWrapper extends App {
       templatePath = templatePath,
       imagePath = Some(imagePath),
       debug = true,
-      useDebouncer = true,
-      useRomForInit = true
+      useDebouncer = true
     ),
     Array("--target-dir", "generated")
   )

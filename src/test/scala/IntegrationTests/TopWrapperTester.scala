@@ -26,8 +26,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
                          symbolN: Int,          // Number of symbols to test
                          useMnistData: Boolean,
                          threshold: Int = 128,
-                         name: String,
-                         useRom: Boolean
+                         name: String
                        ) {
     val totalTemplates = TPN * symbolN
   }
@@ -156,8 +155,8 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
       templatePath = templatePathBase,
       imagePath = Some(imageFile),
       debug = false,
-      useDebouncer = false,
-      useRomForInit = config.useRom)
+      useDebouncer = false
+    )
     ).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       println("\nStarting test sequence...\n")
@@ -296,8 +295,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     TPN = 2,
     symbolN = 3,
     useMnistData = false,
-    name = "Small Synthetic (3 digits, 2 templates each)",
-    useRom = false
+    name = "Small Synthetic (3 digits, 2 templates each)"
   )
 
   val fullSyntheticConfig = TestConfig(
@@ -305,8 +303,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     TPN = 10,
     symbolN = 10,
     useMnistData = false,
-    name = "Full Synthetic (10 digits, 10 templates each)",
-    useRom = false
+    name = "Full Synthetic (10 digits, 10 templates each)"
   )
 
   val smallMnistConfig = TestConfig(
@@ -314,8 +311,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     TPN = 2,
     symbolN = 3,
     useMnistData = true,
-    name = "Small MNIST (3 digits, 2 templates each)",
-    useRom = false
+    name = "Small MNIST (3 digits, 2 templates each)"
   )
 
   val fullMnistConfig = TestConfig(
@@ -323,26 +319,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     TPN = 10,
     symbolN = 10,
     useMnistData = true,
-    name = "Full MNIST (10 digits, 10 templates each)",
-    useRom = false
-  )
-
-  val smallSyntheticRomConfig = TestConfig(
-    imgWidth = 32,
-    TPN = 2,
-    symbolN = 3,
-    useMnistData = false,
-    name = "Small Synthetic (3 digits, 2 templates each) using ROM",
-    useRom = true
-  )
-
-  val fullSyntheticRomConfig = TestConfig(
-    imgWidth = 32,
-    TPN = 10,
-    symbolN = 10,
-    useMnistData = false,
-    name = "Full Synthetic (3 digits, 2 templates each) using ROM",
-    useRom = true
+    name = "Full MNIST (10 digits, 10 templates each)"
   )
 
 
@@ -353,11 +330,11 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "TopWrapper"
 
   // Fast tests (run in CI)
-  //runTopWrapperTestTagged(
-  //  smallSyntheticConfig,
-  //  "verify small synthetic data",
-  //  FastTest
-  //)
+  runTopWrapperTestTagged(
+    smallSyntheticConfig,
+    "verify small synthetic data",
+    FastTest
+  )
 
   // Slow tests (run manually or in extended CI)
   runTopWrapperTestTagged(
@@ -366,22 +343,11 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     SlowTest
   )
 
-  //runTopWrapperTestTagged(
-  //  smallMnistConfig,
-  //  "verify small MNIST data",
-  //  FastTest
-  //)
-
   runTopWrapperTestTagged(
-    smallSyntheticRomConfig,
-    "verify small synthetic data using ROM",
+    smallMnistConfig,
+    "verify small MNIST data",
     FastTest
   )
 
-  runTopWrapperTestTagged(
-    fullSyntheticRomConfig,
-    "verify full synthetic data using ROM",
-    SlowTest
-  )
 
 }

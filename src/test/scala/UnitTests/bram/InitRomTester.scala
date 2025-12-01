@@ -44,7 +44,8 @@ class InitRomTester extends AnyFlatSpec with ChiselScalatestTester {
     val symbolN = 3    // 3 digits (0-2)
     val imgWidth = 32  // 32x32 images
     val TPN = 10       // 10 templates per digit
-    val imageBramIdx = IPN * symbolN
+    val imageBramIdx = TPN * symbolN
+    val lineAddrWidth = log2Ceil(imgWidth)  // = 5 bits
 
     // Generate test file
     val testFile = "genForTests/initrom_test.hex"
@@ -79,13 +80,12 @@ class InitRomTester extends AnyFlatSpec with ChiselScalatestTester {
         val capturedData = scala.collection.mutable.ArrayBuffer[Int]()
 
         for (line <- 0 until imgWidth) {
-          val encodedAddr = (imageBramIdx << log2Ceil(imgWidth)) | line  // Concatenate: upper bits = BRAM, lower bits = line
+          val encodedAddr = (imageBramIdx << lineAddrWidth) | line
+          val expectedValue = (expectedAbsoluteIdx << 8) | line
+
           // Expect write enable and correct address
           dut.io.writeOut.wrEn.expect(true.B)
           dut.io.writeOut.wrAddr.expect(encodedAddr)
-
-          // Capture and verify data (pattern: (imgIdx << 8) | line)
-          val expectedValue = (expectedAbsoluteIdx << 8) | line
           dut.io.writeOut.wrData.expect(expectedValue.U)
           capturedData += expectedValue
 
