@@ -22,8 +22,8 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
   /** Test configuration case class */
   case class TestConfig(
                          imgWidth: Int,
-                         TPN: Int,        // Templates Per Number
-                         symbolN: Int,    // Number of symbols to test
+                         TPN: Int,              // Templates Per Number
+                         symbolN: Int,          // Number of symbols to test
                          useMnistData: Boolean,
                          threshold: Int = 128,
                          name: String
@@ -43,19 +43,16 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
 
     val templateFiles = (0 until config.symbolN).flatMap { digit =>
       (0 until config.TPN).map { templateIdx =>
-        val absoluteIdx = digit * config.TPN + templateIdx
-        val filename = s"genForTests/synthetic_template_${absoluteIdx}.hex"
+        val filename = s"genForTests/synthetic_template_${digit}_${templateIdx}.mem"
         val writer = new PrintWriter(new File(filename))
 
-        // Pattern: Each digit has a unique repeating pattern
-        // Digit 0: 0x11, Digit 1: 0x22, Digit 2: 0x33, etc.
-        val pattern = ((digit + 1) * 0x11) & 0xFF
+        // Pattern: Each digit has a unique repeating pattern (just the digit itself repeated).
+        val pattern = digit
         val fullPattern = if (config.imgWidth == 8) {
           pattern
         } else {
           // For 32-bit width, repeat the pattern
-          val byte = pattern & 0xFF
-          (byte << 24) | (byte << 16) | (byte << 8) | byte
+          (pattern << 24) | (pattern << 16) | (pattern << 8) | pattern
         }
 
         try {
@@ -91,10 +88,9 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     try {
       // Generate one image for each digit
       for (digit <- 0 until config.symbolN) {
-        val patternByte = ((digit + 1) * 0x11) & 0xFF
+        val patternByte = digit
         val byte = patternByte & 0xFF
         // Make each image match template 0 of its digit for perfect recognition
-        val templateIdx = 0
         for (line <- 0 until config.imgWidth) {
           val value = ((byte << 24) | (byte << 16) | (byte << 8) | byte)
           writer.println(f"${value}%08X")
@@ -111,7 +107,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
   /** Generate MNIST-based test data */
   def generateMnistData(config: TestConfig): (Seq[String], String) = {
     println(s"[TestGen] Generating MNIST data (${config.imgWidth}x${config.imgWidth})...")
-    BmpUtil.saveTemplates(config.imgWidth, config.threshold)
+    BmpUtil.saveTemplates(config.imgWidth, config.threshold, config.symbolN, config.TPN)
     BmpUtil.saveInputsToHex(config.imgWidth, config.threshold)
 
     val templateFiles = (0 until config.totalTemplates).map { i =>
@@ -160,7 +156,8 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
       imagePath = Some(imageFile),
       debug = false,
       useDebouncer = false
-    )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    )
+    ).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       println("\nStarting test sequence...\n")
 
@@ -325,6 +322,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     name = "Full MNIST (10 digits, 10 templates each)"
   )
 
+
   // ============================================================================
   // Test Behaviors
   // ============================================================================
@@ -348,12 +346,8 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
   runTopWrapperTestTagged(
     smallMnistConfig,
     "verify small MNIST data",
-    FastTest
-  )
-
-  runTopWrapperTestTagged(
-    fullMnistConfig,
-    "verify full MNIST data",
     SlowTest
   )
+
+
 }

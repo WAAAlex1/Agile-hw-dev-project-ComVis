@@ -1,11 +1,12 @@
 package IntegrationTests
 
 import chisel3._
+import chisel3.util.{Cat, log2Ceil}
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.Tag
-import java.io.{File, PrintWriter}
 
+import java.io.{File, PrintWriter}
 import comvis._
 
 /**
@@ -42,18 +43,16 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     val templateFiles = (0 until config.symbolN).flatMap { digit =>
       (0 until config.TPN).map { templateIdx =>
         val absoluteIdx = digit * config.TPN + templateIdx
-        val filename = s"genForTests/comvis_template_${absoluteIdx}.hex"
+        val filename = s"genForTests/comvis_template_${digit}_${templateIdx}.mem"
         val writer = new PrintWriter(new File(filename))
 
-        // Pattern: Each digit has a unique repeating pattern
-        // Digit 0: 0x11, Digit 1: 0x22, Digit 2: 0x33, etc.
-        val pattern = ((digit + 1) * 0x11) & 0xFF
+        // Pattern: Each digit has a unique repeating pattern (just the digit itself repeated).
+        val pattern = digit
         val fullPattern = if (config.imgWidth == 8) {
           pattern
         } else {
           // For 32-bit width, repeat the pattern
-          val byte = pattern & 0xFF
-          (byte << 24) | (byte << 16) | (byte << 8) | byte
+          (pattern << 24) | (pattern << 16) | (pattern << 8) | pattern
         }
 
         try {
@@ -80,7 +79,7 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
    *  Returns the image data as a sequence of line values
    */
   def generateTestImage(config: TestConfig, matchDigit: Int): Seq[BigInt] = {
-    val patternByte = ((matchDigit + 1) * 0x11) & 0xFF
+    val patternByte = matchDigit//((matchDigit + 1) * 0x11) & 0xFF
 
     val fullPattern: BigInt = if (config.imgWidth == 8) {
       BigInt(patternByte)
@@ -109,8 +108,12 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     // Write image to BRAM
     println("Writing image to BRAM...")
     for ((lineData, lineIdx) <- imageData.zipWithIndex) {
+      val imageBramIdx = config.TPN * config.symbolN
+      val bramSelWidth = log2Ceil(config.TPN * config.symbolN)
+      val encodedWriteAddr = (imageBramIdx << bramSelWidth) | lineIdx
+
       dut.io.memWrite.wrEn.poke(true.B)
-      dut.io.memWrite.wrAddr.poke(lineIdx.U)
+      dut.io.memWrite.wrAddr.poke(encodedWriteAddr)  // TODO: UPDATE WITH NEW ADDR CALC
       dut.io.memWrite.wrData.poke(lineData.U)
       dut.clock.step(1)
     }
@@ -240,15 +243,25 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     println("="*80)
 
     // Generate templates
-    val templateFiles = generateTestTemplates(config)
+    generateTestTemplates(config)
     val templatePathBase = "genForTests/comvis_template"
+
+    // Build template file list and pass it to TopModuleComVis
+    val totalTemplates = config.TPN * config.symbolN
+    val templateFiles = (0 until config.symbolN).flatMap { digit =>
+      (0 until config.TPN).map { templateIdx =>
+        // matches the naming TopModuleComVis expects: template_<digit>_<templateIdx>.mem
+        templatePathBase + s"_${digit}_${templateIdx}.mem"
+      }
+    }
+
 
     test(new TopModuleComVis(
       imgWidth = config.imgWidth,
       TPN = config.TPN,
       symbolN = config.symbolN,
-      templatePath = templatePathBase,
-      debug = false
+      initFiles = Some(templateFiles),
+      debug = true
     )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       println("\n" + "="*80)
@@ -342,6 +355,7 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     name = "32x32 full (10 symbols, 10 templates)"
   )
 
+
   // ============================================================================
   // Test Behaviors
   // ============================================================================
@@ -349,10 +363,10 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "TopModuleComVis"
 
   // Fast tests (run in CI)
-  runComVisTestTagged(config8x8_small, "verify 8x8 small config", FastTest)
+  runComVisTestTagged(config8x8_small, "verify 8x8 small config", FastTest, false)
 
   // Slow tests
-  runComVisTestTagged(config8x8_full, "verify 8x8 full config", SlowTest)
-  runComVisTestTagged(config32x32_small, "verify 32x32 small config", SlowTest)
-  runComVisTestTagged(config32x32_full, "verify 32x32 full config", SlowTest)
+  runComVisTestTagged(config8x8_full, "verify 8x8 full config", SlowTest, false)
+  runComVisTestTagged(config32x32_small, "verify 32x32 small config", SlowTest, false)
+  runComVisTestTagged(config32x32_full, "verify 32x32 full config", SlowTest, false)
 }

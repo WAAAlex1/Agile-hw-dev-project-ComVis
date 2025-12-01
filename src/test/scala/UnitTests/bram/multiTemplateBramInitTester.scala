@@ -28,7 +28,7 @@ class multiTemplateBramInitTester extends AnyFlatSpec with ChiselScalatestTester
     }
 
     val filenames = (0 until totalTemplates).map { templateIdx =>
-      val filename = s"genForTests/test_template_${templateIdx}.hex"
+      val filename = s"genForTests/test_template_${templateIdx}.mem"
       val writer = new PrintWriter(new File(filename))
 
       try {

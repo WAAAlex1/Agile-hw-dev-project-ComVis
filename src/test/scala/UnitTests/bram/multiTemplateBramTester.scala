@@ -1,8 +1,8 @@
 package UnitTests.bram
 
 import bram._
-
 import chisel3._
+import chisel3.util.{Cat, log2Ceil}
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -31,13 +31,17 @@ class multiTemplateBramTester extends AnyFlatSpec with ChiselScalatestTester {
 
       println(s"\n=== Testing MultiTemplateBram: ${defaultTPN} templates per symbol, ${defaultSymbolN} symbols, ${defaultImgWidth}x${defaultImgWidth} ===")
 
+      val imageBramIdx = defaultTPN * defaultSymbolN
+      val lineAddrWidth = log2Ceil(defaultImgWidth)  // = 5 bits
+
       // Test 1: Write pattern to image BRAM
       println("Test 1: Writing pattern to image BRAM")
       for (line <- 0 until defaultImgWidth) {
         val imagePattern = 0x1000 | line
+        val encodedAddr = (imageBramIdx << lineAddrWidth) | line
 
         dut.io.memWrite.wrEn.poke(true.B)
-        dut.io.memWrite.wrAddr.poke(line.U)
+        dut.io.memWrite.wrAddr.poke(encodedAddr)
         dut.io.memWrite.wrData.poke(imagePattern.U)
         dut.clock.step(1)
       }
@@ -88,7 +92,7 @@ class multiTemplateBramTester extends AnyFlatSpec with ChiselScalatestTester {
 
       // Write a specific pattern to image
       dut.io.memWrite.wrEn.poke(true.B)
-      dut.io.memWrite.wrAddr.poke(simultTestLine.U)
+      dut.io.memWrite.wrAddr.poke((imageBramIdx << lineAddrWidth) | simultTestLine  )
       dut.io.memWrite.wrData.poke(simultTestPattern.U)
       dut.clock.step(1)
       dut.io.memWrite.wrEn.poke(false.B)
@@ -110,7 +114,7 @@ class multiTemplateBramTester extends AnyFlatSpec with ChiselScalatestTester {
       val pattern2 = 0x22222222
 
       dut.io.memWrite.wrEn.poke(true.B)
-      dut.io.memWrite.wrAddr.poke(testAddr.U)
+      dut.io.memWrite.wrAddr.poke((imageBramIdx << lineAddrWidth) | testAddr)
       dut.io.memWrite.wrData.poke(pattern1.U)
       dut.clock.step(1)
 

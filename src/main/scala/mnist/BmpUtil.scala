@@ -38,7 +38,7 @@ object BmpUtil {
     // Outputs: A hex file with each line representing a row of the image
     val path       = "templates/"
     val intSeq     = bmp2mem(input, threshold)
-    val outputFile = new File(path + name + ".hex")
+    val outputFile = new File(path + name + ".mem")
     try {
 
       val writer = new java.io.PrintWriter(outputFile)
@@ -57,7 +57,7 @@ object BmpUtil {
 
   // TODO: Rework this to avoid using bmp files as intermediates
   // TODO: Should this be in the mnist folder?
-  def saveTemplates(width: Int, threshold: Int): Unit = {
+  def saveTemplates(width: Int, threshold: Int, symbolN: Int = 10, TPN: Int = 10): Unit = {
     // Utility function to handle creating hex files for all mnist templates
     // width: Width and height of mnist images
     // threshold: Cutoff value for black or white pixels (0 to 255)
@@ -67,15 +67,15 @@ object BmpUtil {
     mH.readLabels()
     mH.Sort()
 
-    for (i <- 0 to 9) {
-      mH.save10xNumber(i.toByte)
-      for (j <- 0 to 9) {
+    for (i <- 0 until symbolN) {
+      mH.saveXNumbers(i.toByte, TPN)
+      for (j <- 0 until TPN) {
         val fileName  = s"mnist_${i}_${j}.bmp"
         val inputFile = new File(fileName)
-        bmp2hexfile(inputFile, threshold, f"template_${i * 10 + j}")
-        if (!inputFile.delete()) {
-          println(s"Could not delete temporary file: $fileName")
-        }
+        bmp2hexfile(inputFile, threshold, f"template_${i}_${j}")
+        // if (!inputFile.delete()) {
+        //  println(s"Could not delete temporary file: $fileName")
+        // }
       }
     }
   }

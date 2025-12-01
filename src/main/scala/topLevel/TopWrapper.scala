@@ -45,9 +45,24 @@ class TopWrapper(
     }
   })
 
+  // Build template file list and pass it to TopModuleComVis
+  val totalTemplates = TPN * symbolN
+  val templateFiles = (0 until symbolN).flatMap { digit =>
+    (0 until TPN).map { templateIdx =>
+      // matches the naming TopModuleComVis expects: template_<digit>_<templateIdx>.hex
+      templatePath + s"_${digit}_${templateIdx}.mem"
+    }
+  }
+
   // instantiate top module
   val comVis = Module(
-    new TopModuleComVis(imgWidth = imgWidth, TPN = TPN, symbolN = symbolN, templatePath = templatePath, debug = debug)
+    new TopModuleComVis(
+      imgWidth = imgWidth,
+      TPN = TPN,
+      symbolN = symbolN,
+      initFiles = Some(templateFiles),
+      debug = debug
+    )
   )
 
   // seven seg
@@ -56,7 +71,7 @@ class TopWrapper(
   val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
 
   // instantiate memory
-  val initRom = Module(new InitRom(IPN = IPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
+  val initRom = Module(new InitRom(IPN = IPN, TPN = TPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
 
   // debouncer
   val startSignal = if (useDebouncer) {
@@ -101,30 +116,34 @@ class TopWrapper(
 object TopWrapper extends App {
 
   // Check if files exist, only generate if missing
-  val templatePath = "templates/template"
-  val imagePath    = "templates/mnist_input.hex"
+  val templatePath = "template"
+  val imagePath    = "mnist_input.hex"
 
-  val templateDir = new java.io.File("templates")
-  val needsGeneration = !templateDir.exists() ||
-    templateDir.listFiles().length < 100
+  val width   = 32
+  val symbolN = 10
+  val TPN     = 10
 
-  if (needsGeneration) {
-    println("Generating template files (first-time setup)")
-    saveTemplates(32, 128)
-    saveInputsToHex(32, 128)
-  } else {
-    println("Using existing template files")
-  }
+  val numImages = 10
+
+  println("Generating template files")
+  saveTemplates(width, 128, symbolN, TPN)
+  saveInputsToHex(32, 128)
+
+  /** println("Generating COE files for BRAM initialization") bramUtil.generateAllTemplateCoe( numDigits = 10, TPN = 10,
+    * imgWidth = 32, hexBasePath = "templates/template", coeOutputDir = "generated/coe" )
+    */
 
   println("Generating hardware")
   emitVerilog(
     new TopWrapper(
-      imgWidth = 32,
-      TPN = 10,
-      IPN = 10,
-      symbolN = 10,
+      imgWidth = width,
+      TPN = TPN,
+      IPN = numImages,
+      symbolN = symbolN,
       templatePath = templatePath,
-      imagePath = Some(imagePath)
+      imagePath = Some(imagePath),
+      debug = true,
+      useDebouncer = true
     ),
     Array("--target-dir", "generated")
   )
