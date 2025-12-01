@@ -30,7 +30,7 @@ The tools and setup required for this project are described in the course reposi
 Before the installation can be tested, some files need to be pre-compiled first. To do this, run:
 
 ```
-sbt "testOnly bmp2HexTest"
+sbt "testOnly SoftwareTests.bmp2HexTest"
 ```
 
 That should generate .bmp files from the templates, which can be converted into hex files.
