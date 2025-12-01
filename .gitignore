@@ -54,7 +54,6 @@ build/
 test_run_dir/
 
 /generated
-/templates/*.hex
 /genForTests
 mnist_0_0.bmp
 mnist_0_1.bmp
@@ -156,4 +155,4 @@ mnist_9_6.bmp
 mnist_9_7.bmp
 mnist_9_8.bmp
 mnist_9_9.bmp
-/templates
+
