@@ -16,7 +16,7 @@ import comvis._
   * @param width
   *   Bits per location
   * @param initFile
-  *   Optional memory initialization file path (.hex format)
+  *   Optional memory initialization file path (.mem file-ending, hex format)
   * @param debug
   *   Enable debug output
   * @param uniqueId
@@ -244,6 +244,10 @@ class MultiTemplateBram(
       s"[MultiTemplateBram] Write address: ${totalWrAddrWidth} bits [${bramSelWidth} BRAM sel | ${addrWidth} line addr]"
     )
 }
+
+
+// OUTDATED =====================================================================================
+// TODO: FIX
 
 // Instantiation for testing
 object BramMem24 extends App {

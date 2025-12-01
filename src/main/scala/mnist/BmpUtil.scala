@@ -116,7 +116,7 @@ object BmpUtil {
       }
     }
 
-    val outputFile = new File("mnist_input.hex")
+    val outputFile = new File("mnist_input.mem")
     val writerHex  = new java.io.PrintWriter("templates/" + outputFile)
 
     try

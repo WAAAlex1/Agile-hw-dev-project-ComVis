@@ -78,11 +78,6 @@ object BramConfig {
     val symbolN  = 10 // Number of symbols (digits 0-9)
   }
 
-  object MemInitMode extends Enumeration {
-    type MemInitMode = Value
-    val Simulation, Synthesis = Value
-  }
-
 }
 
 /** Pre-configured MultiTemplateBram variants

@@ -7,34 +7,34 @@ import chisel3.util.experimental.loadMemoryFromFileInline
 import comvis._
 
 /** InitRom - ROM containing test images with transfer controller
-  *
-  * Stores multiple test images in a single memory and transfers selected image to image BRAM line-by-line when start
-  * signal is asserted.
-  *
-  * @param IPN
-  *   Images per number
-  * @param TPN
-  *   Templates per number
-  * @param symbolN
-  *   Number of symbols (digits 0-9)
-  * @param imgWidth
-  *   Image width (and height, since square)
-  * @param initFile
-  *   Single mem (hex formatted) file with all images concatenated
-  */
-class InitRom(
-  val IPN: Int,
-  val TPN: Int,
-  val symbolN: Int,
-  val imgWidth: Int,
-  val initFile: Option[String] = None,
-  val debug: Boolean = false
-) extends Module {
+ *
+ * Uses SyncReadMem for BRAM inference on FPGA.
+ * Handles 1-cycle read latency with pipelined state machine.
+ *
+ * @param IPN
+ *   Images per number
+ * @param TPN
+ *   Templates per number
+ * @param symbolN
+ *   Number of symbols (digits 0-9)
+ * @param imgWidth
+ *   Image width (and height, since square)
+ * @param initFile
+ *   Single mem (hex formatted) file with all images concatenated
+ */
+class InitRam(
+               val IPN: Int,
+               val TPN: Int,
+               val symbolN: Int,
+               val imgWidth: Int,
+               val initFile: Option[String] = None,
+               val debug: Boolean = false
+             ) extends Module {
 
   val totalImages  = IPN * symbolN
-  val totalLines   = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
-  val totalBrams   = TPN * symbolN + 1 // 100 template BRAMs + 1 image BRAM = 101 total
-  val imageBramIdx = TPN * symbolN // Image BRAM is at index 100 (after all templates)
+  val totalLines   = totalImages * imgWidth   // e.g., 100 * 32 = 3200 lines total
+  val totalBrams   = TPN * symbolN + 1        // 100 template BRAMs + 1 image BRAM = 101 total
+  val imageBramIdx = TPN * symbolN            // Image BRAM is at index 100 (after all templates)
 
   val lineAddrWidth    = log2Ceil(imgWidth)
   val bramSelWidth     = log2Ceil(totalBrams)
@@ -47,7 +47,6 @@ class InitRom(
     val imgSelect   = Input(UInt(4.W)) // Select which template (0-9) for that digit
 
     // Interface to MultiTemplateBram (write only)
-    // Address is now encoded as {BRAM_index, line_address}
     val writeOut = Flipped(new MemWrite(totalWrAddrWidth, imgWidth, totalBrams))
 
     // Status outputs
@@ -60,10 +59,10 @@ class InitRom(
   if(debug) println(s"[InitRom] Line address bits: ${lineAddrWidth}")
   if(debug) println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
 
-  // ==================== ROM MEMORY ====================
+  // ==================== BRAM MEMORY (Synchronous Read) ====================
 
-  // Use Mem for asynchronous read
-  val romMem = Mem(totalLines, UInt(imgWidth.W))
+  // Use SyncReadMem to infer BRAM
+  val romMem = SyncReadMem(totalLines, UInt(imgWidth.W))
 
   // Initialize from single file using Chisel's built-in function
   initFile match {
@@ -78,12 +77,12 @@ class InitRom(
   // ==================== STATE MACHINE ====================
 
   object State extends ChiselEnum {
-    val idle, transferring, done = Value
+    val idle, stageRead, transferring, lastTransfer, done = Value
   }
   import State._
 
   val stateReg      = RegInit(idle)
-  val lineCounter   = RegInit(0.U(lineAddrWidth.W))
+  val lineCounter   = RegInit(0.U((lineAddrWidth).W))
   val selectedDigit = RegInit(0.U(4.W))
   val selectedImg   = RegInit(0.U(4.W))
 
@@ -94,11 +93,13 @@ class InitRom(
   val baseAddr = absoluteImgIdx * imgWidth.U
   val romAddr  = baseAddr + lineCounter
 
-  // Asynchronous read from ROM
-  val romData = romMem.read(romAddr)
+  // Synchronous read from ROM (data available NEXT cycle)
+  val romData = romMem.read(romAddr, stateReg === stageRead || stateReg === transferring)
+
+  // Pipeline register for write address (to align with read data)
+  val writeAddrReg = RegInit(0.U(totalWrAddrWidth.W))
 
   // Encode write address: {image_BRAM_index, line_address}
-  // Image BRAM is always at index imageBramIdx (usually 100)
   val encodedWriteAddr = Cat(imageBramIdx.U(bramSelWidth.W), lineCounter)
 
   // Default outputs
@@ -106,7 +107,7 @@ class InitRom(
   io.writeOut.wrAddr := 0.U
   io.writeOut.wrData := 0.U
   io.startOut        := false.B
-  io.busy            := stateReg === transferring
+  io.busy            := (stateReg === stageRead) || (stateReg === transferring) || (stateReg === lastTransfer)
 
   switch(stateReg) {
     is(idle) {
@@ -114,22 +115,40 @@ class InitRom(
         selectedDigit := io.digitSelect
         selectedImg   := io.imgSelect
         lineCounter   := 0.U
-        stateReg      := transferring
+        stateReg      := stageRead
       }
     }
 
+    is(stageRead) {
+      // Issue first read, data will be available next cycle
+      writeAddrReg := encodedWriteAddr
+      lineCounter  := lineCounter + 1.U
+      stateReg     := transferring
+    }
+
     is(transferring) {
-      // Write current line to IMAGE BRAM (encoded address selects BRAM 100)
+      // Write data from previous read cycle
       io.writeOut.wrEn   := true.B
-      io.writeOut.wrAddr := encodedWriteAddr
+      io.writeOut.wrAddr := writeAddrReg
       io.writeOut.wrData := romData
 
+      // Prepare next address
+      writeAddrReg := encodedWriteAddr
+
       // Check if transfer complete
-      when(lineCounter === (imgWidth - 1).U) {
-        stateReg := done
+      when(lineCounter === (imgWidth-1).U) {
+        // Last write will happen this cycle
+        stateReg := lastTransfer
       }.otherwise {
         lineCounter := lineCounter + 1.U
+        // Continue reading next line
       }
+    }
+    is(lastTransfer){
+      io.writeOut.wrEn  := true.B
+      io.writeOut.wrAddr := writeAddrReg
+      io.writeOut.wrData := romData
+      stateReg := done
     }
 
     is(done) {

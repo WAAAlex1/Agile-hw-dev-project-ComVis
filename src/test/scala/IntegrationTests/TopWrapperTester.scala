@@ -155,7 +155,8 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
       templatePath = templatePathBase,
       imagePath = Some(imageFile),
       debug = false,
-      useDebouncer = false
+      useDebouncer = false,
+      includeDebugPorts = true
     )
     ).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
@@ -192,7 +193,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
         var waitCycles = 0
         val maxWaitForStart = 200
         while (!romStarted && waitCycles < maxWaitForStart) {
-          if (dut.io.debug.romStartOut.peek().litToBoolean) {
+          if (dut.io.debug.get.romStartOut.peek().litToBoolean) {
             romStarted = true
             println(s"    ROM started after ${waitCycles} cycles")
           }
@@ -215,14 +216,14 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
 
         if (cycles >= maxCycles) {
           println(s"    ERROR: Timed out after ${cycles} cycles")
-          println(s"    Final state: done=${dut.io.done.peek().litToBoolean}, romBusy=${dut.io.debug.romBusy.peek().litToBoolean}")
+          println(s"    Final state: done=${dut.io.done.peek().litToBoolean}, romBusy=${dut.io.debug.get.romBusy.peek().litToBoolean}")
         } else {
           println(s"    Processing completed in ${cycles} cycles")
         }
 
         // Read results
-        val predictedDigit = dut.io.debug.bestIdx.peek().litValue.toInt
-        val confidence = dut.io.debug.bestConf.peek().litValue.toInt
+        val predictedDigit = dut.io.debug.get.bestIdx.peek().litValue.toInt
+        val confidence = dut.io.debug.get.bestConf.peek().litValue.toInt
         val maxScore = config.imgWidth * config.imgWidth * config.TPN
         val confidencePercent = (confidence * 100) / maxScore
 
