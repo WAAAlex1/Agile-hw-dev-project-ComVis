@@ -55,7 +55,16 @@ class TopWrapperUART(
   }
 
   // LED reg:
-  val ledReg = RegInit(0.U(8.W))
+  val ledReg      = RegInit(0.U(8.W))
+  val doneReg     = RegInit(0.U(1.W))
+  val bestIdxReg  = RegInit(0.U(log2Up(symbolN).W))
+  val bestConfReg = RegInit(0.U(log2Up((imgWidth * imgWidth * TPN) + 1).W))
+
+  when(comVis.io.done) {
+    bestIdxReg  := comVis.io.bestIdx
+    bestConfReg := comVis.io.bestConf
+    doneReg     := comVis.io.done
+  }
 
   // connections
   comVis.io.start := startSignal
@@ -69,8 +78,8 @@ class TopWrapperUART(
 
   // ComVis to SevenSeg. Label based??
   sevenSegDriver.io.digitA     := 0.U
-  sevenSegDriver.io.digitB     := comVis.io.bestIdx
-  sevenSegDriver.io.confidence := comVis.io.bestConf
+  sevenSegDriver.io.digitB     := bestIdxReg
+  sevenSegDriver.io.confidence := bestConfReg
 
   // UART Sleep logic:
   when(bootloader.io.wrEn === 1.U) {
@@ -93,14 +102,14 @@ class TopWrapperUART(
   io.anodes   := sevenSegDriver.io.anodes
   io.cathodes := sevenSegDriver.io.cathodes
 
-  io.done := comVis.io.done
+  io.done := doneReg
   io.led  := ledReg
 }
 
 object TopWrapperUART extends App {
   println("Generating the hardware")
   emitVerilog(
-    new TopWrapperUART(100000000, 32, 10, 10, "", false, true),
+    new TopWrapperUART(50000000, 32, 10, 10, "", false, true),
     Array("--target-dir", "generated")
   )
 }
