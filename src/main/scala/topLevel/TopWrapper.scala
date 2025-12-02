@@ -17,7 +17,8 @@ class TopWrapper(
   val templatePath: String, // Path to template folder and start of name. Rest of name should be _i.hex.
   val imagePath: Option[String], // Total Path to image file. No restrictions on naming. Should be hex file.
   val debug: Boolean = false,
-  val useDebouncer: Boolean = true
+  val useDebouncer: Boolean = true,
+  val includeDebugPorts: Boolean = true
 ) extends Module {
 
   // Validate parameters at elaboration time
@@ -37,12 +38,13 @@ class TopWrapper(
     val cathodes = Output(UInt(8.W))
 
     // Debug outputs for testing (could be wrapped in #ifdef for synthesis)
-    val debug = new Bundle {
+    val debug = if (includeDebugPorts) Some(Output(new Bundle {
       val bestIdx     = Output(UInt(log2Up(symbolN).W))
       val bestConf    = Output(UInt(log2Up((imgWidth * imgWidth) * TPN + 1).W))
       val romBusy     = Output(Bool())
       val romStartOut = Output(Bool())
-    }
+    }))
+    else None
   })
 
   // Build template file list and pass it to TopModuleComVis
@@ -66,12 +68,11 @@ class TopWrapper(
   )
 
   // seven seg
-  val maxScore = (imgWidth * imgWidth) * TPN;
-
+  val maxScore       = (imgWidth * imgWidth) * TPN;
   val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
 
   // instantiate memory
-  val initRom = Module(new InitRom(IPN = IPN, TPN = TPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
+  val initRom = Module(new InitRam(IPN = IPN, TPN = TPN, symbolN = symbolN, imgWidth = imgWidth, initFile = imagePath))
 
   // debouncer
   val startSignal = if (useDebouncer) {
@@ -83,7 +84,25 @@ class TopWrapper(
     io.start
   }
 
-  // connections
+  // ============================================================================
+  // OUTPUT HOLDING REGISTERS
+  // ============================================================================
+  // These registers capture and hold the results until start is pressed again
+
+  val bestIdxHold  = RegInit(0.U(log2Up(symbolN).W))
+  val bestConfHold = RegInit(0.U(log2Up((imgWidth * imgWidth) * TPN + 1).W))
+  val doneHold     = RegInit(false.B)
+
+  when(comVis.io.done) {
+    doneHold     := comVis.io.done
+    bestIdxHold  := comVis.io.bestIdx
+    bestConfHold := comVis.io.bestConf
+  }
+
+  // ============================================================================
+  // CONNECTIONS
+  // ============================================================================
+
   initRom.io.start       := startSignal
   initRom.io.digitSelect := io.digitSel
   initRom.io.imgSelect   := io.imgSel
@@ -96,55 +115,56 @@ class TopWrapper(
 
   // ComVis to SevenSeg and digit select
   sevenSegDriver.io.digitA     := io.digitSel
-  sevenSegDriver.io.digitB     := comVis.io.bestIdx
-  sevenSegDriver.io.confidence := comVis.io.bestConf
+  sevenSegDriver.io.digitB     := bestIdxHold // Use held value
+  sevenSegDriver.io.confidence := bestConfHold // Use held value
 
   // outputs
   io.anodes   := sevenSegDriver.io.anodes
   io.cathodes := sevenSegDriver.io.cathodes
-
-  io.done := comVis.io.done
+  io.done     := doneHold // Use held value
 
   // Debug outputs
-  io.debug.bestIdx     := comVis.io.bestIdx
-  io.debug.bestConf    := comVis.io.bestConf
-  io.debug.romBusy     := initRom.io.busy
-  io.debug.romStartOut := initRom.io.startOut
+  io.debug.foreach { port =>
+    port.bestIdx     := comVis.io.bestIdx
+    port.bestConf    := comVis.io.bestConf
+    port.romBusy     := initRom.io.busy
+    port.romStartOut := initRom.io.startOut
+  }
 
 }
 
 object TopWrapper extends App {
 
   // Check if files exist, only generate if missing
-  val templatePath = "template"
-  val imagePath    = "mnist_input.hex"
+  val templateRoot = "template"
+  val imageFile    = "mnist_input.mem"
 
-  val width   = 32
-  val symbolN = 10
-  val TPN     = 10
+  val width               = 32
+  val number_of_digits    = 10
+  val templates_per_digit = 10
 
   val numImages = 10
 
   println("Generating template files")
-  saveTemplates(width, 128, symbolN, TPN)
+  saveTemplates(width, 128, number_of_digits, templates_per_digit)
   saveInputsToHex(32, 128)
-
-  /** println("Generating COE files for BRAM initialization") bramUtil.generateAllTemplateCoe( numDigits = 10, TPN = 10,
-    * imgWidth = 32, hexBasePath = "templates/template", coeOutputDir = "generated/coe" )
-    */
 
   println("Generating hardware")
   emitVerilog(
     new TopWrapper(
       imgWidth = width,
-      TPN = TPN,
+      TPN = templates_per_digit,
       IPN = numImages,
-      symbolN = symbolN,
-      templatePath = templatePath,
-      imagePath = Some(imagePath),
+      symbolN = number_of_digits,
+      templatePath = templateRoot,
+      imagePath = Some(imageFile),
       debug = true,
-      useDebouncer = true
+      useDebouncer = true,
+      includeDebugPorts = false
     ),
-    Array("--target-dir", "generated")
+    Array(
+      "--target-dir",
+      "generated"
+    )
   )
 }

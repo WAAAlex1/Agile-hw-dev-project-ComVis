@@ -20,14 +20,15 @@ import comvis._
   * @param imgWidth
   *   Image width (and height, since square)
   * @param initFile
-  *   Single hex file with all images concatenated
+  *   Single mem (hex formatted) file with all images concatenated
   */
 class InitRom(
   val IPN: Int,
   val TPN: Int,
   val symbolN: Int,
   val imgWidth: Int,
-  val initFile: Option[String] = None
+  val initFile: Option[String] = None,
+  val debug: Boolean = false
 ) extends Module {
 
   val totalImages  = IPN * symbolN
@@ -54,10 +55,10 @@ class InitRom(
     val busy     = Output(Bool())
   })
 
-  println(s"[InitRom] Image BRAM index: ${imageBramIdx}")
-  println(s"[InitRom] BRAM select bits: ${bramSelWidth}")
-  println(s"[InitRom] Line address bits: ${lineAddrWidth}")
-  println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
+  if (debug) println(s"[InitRom] Image BRAM index: ${imageBramIdx}")
+  if (debug) println(s"[InitRom] BRAM select bits: ${bramSelWidth}")
+  if (debug) println(s"[InitRom] Line address bits: ${lineAddrWidth}")
+  if (debug) println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
 
   // ==================== ROM MEMORY ====================
 
@@ -68,10 +69,10 @@ class InitRom(
   initFile match {
     case Some(file) =>
       loadMemoryFromFileInline(romMem, file)
-      println(s"[InitRom] Initialized ${totalImages} images from $file")
-      println(s"[InitRom] Total lines in file: $totalLines (${totalImages} x ${imgWidth})")
+      if (debug) println(s"[InitRom] Initialized ${totalImages} images from $file")
+      if (debug) println(s"[InitRom] Total lines in file: $totalLines (${totalImages} x ${imgWidth})")
     case None =>
-      println(s"[InitRom] WARNING: No init file - ROM will be uninitialized")
+      if (debug) println(s"[InitRom] WARNING: No init file - ROM will be uninitialized")
   }
 
   // ==================== STATE MACHINE ====================
