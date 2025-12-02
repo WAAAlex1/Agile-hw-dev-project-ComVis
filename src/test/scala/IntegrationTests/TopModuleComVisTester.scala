@@ -113,7 +113,7 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
       val encodedWriteAddr = (imageBramIdx << bramSelWidth) | lineIdx
 
       dut.io.memWrite.wrEn.poke(true.B)
-      dut.io.memWrite.wrAddr.poke(encodedWriteAddr)  // TODO: UPDATE WITH NEW ADDR CALC
+      dut.io.memWrite.wrAddr.poke(encodedWriteAddr)
       dut.io.memWrite.wrData.poke(lineData.U)
       dut.clock.step(1)
     }

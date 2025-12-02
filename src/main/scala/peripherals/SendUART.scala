@@ -1,94 +1,228 @@
 package peripherals
 
 /*
- * New SendUART will take any binary file and send it with correct addresses.
+ * SendUART for sending multiple template hex files to FPGA.
  *
- * By @GeorgBD
+ * - Reads template files from ./templates
+ * - Files named: template_{TPNidx}_{symbolNidx}.hex
+ * - Each file contains imgWidth lines of hex (each line = one row)
+ * - Sends for each row:
+ *     1) 32-bit address (4 bytes at once)
+ *     2) 32-bit data    (4 bytes at once)
+ *
+ * Address format MUST match chiseltest:
+ *   addr = (templateAddr << kWidth) | k
+ *   where:
+ *     templateAddr = symbolNidx * TPN + TPNidx
+ *     k             = row index within template
+ *     kWidth        = ceil(log2(imgWidth))
+ *
+ * After templates are sent:
+ *   - sendImage(...) is called
+ *   - then bootloaderSleep(...)
  */
 
 import com.fazecast.jSerialComm.SerialPort
 
 import java.nio.ByteBuffer
-import java.nio.file.{ Files, Paths }
-/*
-import java.util.HexFormat
-import scala.math.BigInt
-import scala.util.Try
- */
+import java.nio.file.{Files, Paths}
+import scala.util.matching.Regex
 
 object SendUART {
+
+  // -----------------------------
+  // Entry point
+  // -----------------------------
   def main(args: Array[String]): Unit = {
-    // Make sure we got a file:
-    if (args.length != 1) {
-      println("Usage: ReadFileBytes <file-path>")
+    if (args.length != 3) {
+      println("Usage: SendUART <symbolN> <TPN> <imgWidth>")
       System.exit(1)
     }
 
-    // Identify available serial ports
-    val ports = SerialPort.getCommPorts
-    if (ports.isEmpty) System.out.println("No COM ports found ;(")
+    val symbolN  = args(0).toInt
+    val TPN      = args(1).toInt
+    val imgWidth = args(2).toInt
 
-    var foundPortName = "COM4" // Standard COM port found on Georg's PC
+    val kWidth     = log2Ceil(imgWidth)
+    val indexWidth = log2Ceil(symbolN * TPN)
+
+    println(s"symbolN=$symbolN  TPN=$TPN  imgWidth=$imgWidth")
+    println(s"kWidth=$kWidth  indexWidth=$indexWidth")
+
+    // -----------------------------
+    // Find serial port
+    // -----------------------------
+    val ports = SerialPort.getCommPorts
+    if (ports.isEmpty) {
+      println("No COM ports found")
+      System.exit(1)
+    }
+
+    var foundPortName = "COM4"
     for (port <- ports) {
-      foundPortName = port.getSystemPortName // If other port found dynamically allocate
-      System.out.println("Found Port: " + foundPortName)
+      foundPortName = port.getSystemPortName
+      println("Found Port: " + foundPortName)
     }
 
     val serialPort = SerialPort.getCommPort(foundPortName)
-    serialPort.setBaudRate(115200) // Set baud rate (match with receiver)
-
+    serialPort.setBaudRate(115200)
     serialPort.setNumDataBits(8)
     serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT)
     serialPort.setParity(SerialPort.NO_PARITY)
 
     if (!serialPort.openPort) {
-      System.out.println("Failed to open port.")
+      println("Failed to open port.")
       return
     } else {
-      System.out.println("Port opened successfully.")
+      println("Port opened successfully.")
     }
 
-    // Get the bytes of the file to send:
-    val imgPath  = Paths.get(args(0))
-    val imgBytes = Files.readAllBytes(imgPath)
+    // -----------------------------
+    // Send all templates (separate function)
+    // -----------------------------
+    loadAndSendTemplates(serialPort, symbolN, TPN, imgWidth, kWidth)
 
-    // Send the image
-    sendImage(imgBytes, serialPort, 0x0)
+    // -----------------------------
+    // Optionally send an image AFTER templates
+    // (kept as requested; currently sends nothing)
+    // -----------------------------
+    sendImage(serialPort, symbolN, TPN, imgWidth, kWidth)
 
-    // Set the bootloader to sleep and set LEDs to high
+    // -----------------------------
+    // Finalize
+    // -----------------------------
     bootloaderSleep(serialPort)
 
-    System.out.println("Data sent.")
-    serialPort.closePort // Make sure to close the SerialPort
-    System.out.println("Port closed.")
+    println("All templates sent.")
+    serialPort.closePort()
+    println("Port closed.")
   }
 
-  def sendImage(bytes: Array[Byte], serialPort: SerialPort, startAddr: Int): Unit = {
-    var address = startAddr
+  // -----------------------------
+  // TEMPLATE LOADING + SENDING
+  // -----------------------------
+  def loadAndSendTemplates(
+                            serialPort: SerialPort,
+                            symbolN: Int,
+                            TPN: Int,
+                            imgWidth: Int,
+                            kWidth: Int
+                          ): Unit = {
 
-    for (i <- 0 until Math.ceil(bytes.length / 4.0).toInt) { // Reading 4 bytes at a time
-      val start       = i * 4
-      val end         = Math.min(start + 4, bytes.length)
-      val chunk       = bytes.slice(start, end)
-      val paddedChunk = if (chunk.length < 4) chunk ++ Array.fill[Byte](4 - chunk.length)(0.toByte) else chunk
-
-      val addressBytesPadded = ByteBuffer.allocate(4).putInt(address).array()
-
-      // Write address (4 bytes)
-      serialPort.writeBytes(addressBytesPadded, 4)
-      println(addressBytesPadded.map(b => f"0x$b%02X").mkString("Address: (", " ", ")"))
-
-      // Write data (4 bytes)
-      serialPort.writeBytes(paddedChunk, 4)
-      println(paddedChunk.map(b => f"0x$b%02X").mkString("Data: (", " ", ")"))
-
-      address += 1
+    val templateDir = Paths.get("templates")
+    if (!Files.exists(templateDir) || !Files.isDirectory(templateDir)) {
+      println("templates folder not found")
+      System.exit(1)
     }
+
+    val templateRegex: Regex = "template_(\\d+)_(\\d+)\\.mem".r
+
+    val templateFiles = Files
+      .list(templateDir)
+      .toArray
+      .map(_.asInstanceOf[java.nio.file.Path])
+      .filter(p => templateRegex.matches(p.getFileName.toString))
+      .toSeq
+
+    println(s"Found ${templateFiles.length} template files")
+
+    for (path <- templateFiles) {
+      val templateRegex(symbolIdxStr, tpnIdxStr) = path.getFileName.toString
+      val tpnIdx    = tpnIdxStr.toInt
+      val symbolIdx = symbolIdxStr.toInt
+
+      val templateAddr = symbolIdx * TPN + tpnIdx
+
+      println(s"Sending template: ${path.getFileName} -> templateAddr=$templateAddr")
+
+      val lines = Files
+        .readAllLines(path)
+        .toArray
+        .map(_.toString.trim)
+        .filter(_.nonEmpty)
+
+      if (lines.length != imgWidth) {
+        println(s"WARNING: ${path.getFileName} has ${lines.length} rows, expected $imgWidth")
+      }
+
+      for (k <- lines.indices) {
+        val dataWord = BigInt(lines(k), 16) & 0xFFFFFFFFL
+
+        val addr: BigInt =
+          (BigInt(templateAddr) << kWidth) | BigInt(k)
+
+        // --- Send 32-bit address (4 bytes at once)
+        val addrBytes = ByteBuffer.allocate(4).putInt(addr.toInt).array()
+        serialPort.writeBytes(addrBytes, 4)
+
+        // --- Send 32-bit data (4 bytes at once)
+        val dataBytes = ByteBuffer.allocate(4).putInt(dataWord.toInt).array()
+        serialPort.writeBytes(dataBytes, 4)
+
+        println(f"ADDR=0x${addr}%08X  DATA=0x${dataWord}%08X")
+      }
+    }
+  }
+
+  def sendImage(
+                 serialPort: SerialPort,
+                 symbolN: Int,
+                 TPN: Int,
+                 imgWidth: Int,
+                 kWidth: Int
+               ): Unit = {
+
+    val imgPath = Paths.get("inputImage.mem")
+    if (!Files.exists(imgPath)) {
+      println("inputImage.mem not found, skipping image send")
+      return
+    }
+
+    val startAddr = symbolN * TPN
+
+    println(s"Sending input image starting at address $startAddr")
+
+    val lines = Files
+      .readAllLines(imgPath)
+      .toArray
+      .map(_.toString.trim)
+      .filter(_.nonEmpty)
+
+    if (lines.length != imgWidth) {
+      println(s"WARNING: inputImage.mem has ${lines.length} rows, expected $imgWidth")
+    }
+
+    for (k <- lines.indices) {
+      val dataWord = BigInt(lines(k), 16) & 0xFFFFFFFFL
+
+      val addr: BigInt =
+        (BigInt(startAddr) << kWidth) | BigInt(k)
+
+      // --- Send 32-bit address (4 bytes at once)
+      val addrBytes = ByteBuffer.allocate(4).putInt(addr.toInt).array()
+      serialPort.writeBytes(addrBytes, 4)
+
+      // --- Send 32-bit data (4 bytes at once)
+      val dataBytes = ByteBuffer.allocate(4).putInt(dataWord.toInt).array()
+      serialPort.writeBytes(dataBytes, 4)
+
+      println(f"IMG ADDR=0x${addr}%08X  DATA=0x${dataWord}%08X")
+    }
+  }
+
+  // -----------------------------
+  // Utilities
+  // -----------------------------
+
+  // Exact Chisel-compatible log2Ceil
+  def log2Ceil(x: Int): Int = {
+    require(x > 0)
+    if (x == 1) 0 else 32 - Integer.numberOfLeadingZeros(x - 1)
   }
 
   def bootloaderSleep(serialPort: SerialPort): Unit = {
-    System.out.println("Putting Bootloader to sleep and unstalling pipeline")
-    // This byte array should turn on the LED on the FPGA board and sleep the bootloader
+    println("Putting Bootloader to sleep and setting LED high")
+
     val blSleepProtocol = Array[Byte](
       0xf0.toByte,
       0x01.toByte,
@@ -107,8 +241,8 @@ object SendUART {
       0x00.toByte,
       0x01.toByte
     )
+
     serialPort.writeBytes(blSleepProtocol, 8)
     println(blSleepProtocol.map(b => f"0x$b%02X").mkString("BootSleep: (", " ", ")"))
   }
-
 }

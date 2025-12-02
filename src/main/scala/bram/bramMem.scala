@@ -192,7 +192,7 @@ class MultiTemplateBram(
 
   val io = IO(new Bundle {
     val memIn    = new MemIn(addrWidth)
-    val memWrite = new MemWrite(totalWrAddrWidth, imgWidth, totalBrams) // Updated
+    val memWrite = new MemWrite(addrWidth, imgWidth, totalBrams) // Updated
     val memOut   = new MemOut(imgWidth, TPN, symbolN)
   })
 

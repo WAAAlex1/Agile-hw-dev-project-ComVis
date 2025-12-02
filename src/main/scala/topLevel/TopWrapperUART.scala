@@ -36,7 +36,7 @@ class TopWrapperUART(
   }
 
   // instantiate top module
-  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, Some(templateFiles), debug))
+  val comVis = Module(new TopModuleComVis(imgWidth, TPN, symbolN, None, debug))
 
   // UART loader stuff
   val bootloader = Module(new Bootloader(frequ, 115200))
@@ -62,7 +62,7 @@ class TopWrapperUART(
 
   // UART and ComVis
   comVis.io.memWrite.wrData := bootloader.io.wrData(imgWidth - 1, 0) // Lazy bootloader fix
-  comVis.io.memWrite.wrAddr := bootloader.io.wrAddr(log2Up(imgWidth), 0) // Width translation
+  comVis.io.memWrite.wrAddr := bootloader.io.wrAddr(log2Up(imgWidth) + log2Up(TPN*symbolN), 0) // Width translation
   comVis.io.memWrite.wrEn   := bootloader.io.wrEn
   bootloader.io.rx          := io.rx
   bootloader.io.sleep       := 0.U // Default
@@ -100,7 +100,7 @@ class TopWrapperUART(
 object TopWrapperUART extends App {
   println("Generating the hardware")
   emitVerilog(
-    new TopWrapperUART(100000000, 32, 10, 10, "templates/template", false, true),
+    new TopWrapperUART(100000000, 32, 10, 10, "", false, true),
     Array("--target-dir", "generated")
   )
 }
