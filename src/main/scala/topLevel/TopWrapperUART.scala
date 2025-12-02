@@ -62,7 +62,7 @@ class TopWrapperUART(
 
   // UART and ComVis
   comVis.io.memWrite.wrData := bootloader.io.wrData(imgWidth - 1, 0) // Lazy bootloader fix
-  comVis.io.memWrite.wrAddr := bootloader.io.wrAddr(log2Up(imgWidth) + log2Up(TPN*symbolN), 0) // Width translation
+  comVis.io.memWrite.wrAddr := bootloader.io.wrAddr(log2Up(imgWidth) + log2Up(TPN * symbolN), 0) // Width translation
   comVis.io.memWrite.wrEn   := bootloader.io.wrEn
   bootloader.io.rx          := io.rx
   bootloader.io.sleep       := 0.U // Default

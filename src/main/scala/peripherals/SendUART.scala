@@ -25,7 +25,7 @@ package peripherals
 import com.fazecast.jSerialComm.SerialPort
 
 import java.nio.ByteBuffer
-import java.nio.file.{Files, Paths}
+import java.nio.file.{ Files, Paths }
 import scala.util.matching.Regex
 
 object SendUART {
@@ -102,12 +102,12 @@ object SendUART {
   // TEMPLATE LOADING + SENDING
   // -----------------------------
   def loadAndSendTemplates(
-                            serialPort: SerialPort,
-                            symbolN: Int,
-                            TPN: Int,
-                            imgWidth: Int,
-                            kWidth: Int
-                          ): Unit = {
+    serialPort: SerialPort,
+    symbolN: Int,
+    TPN: Int,
+    imgWidth: Int,
+    kWidth: Int
+  ): Unit = {
 
     val templateDir = Paths.get("templates")
     if (!Files.exists(templateDir) || !Files.isDirectory(templateDir)) {
@@ -128,8 +128,8 @@ object SendUART {
 
     for (path <- templateFiles) {
       val templateRegex(symbolIdxStr, tpnIdxStr) = path.getFileName.toString
-      val tpnIdx    = tpnIdxStr.toInt
-      val symbolIdx = symbolIdxStr.toInt
+      val tpnIdx                                 = tpnIdxStr.toInt
+      val symbolIdx                              = symbolIdxStr.toInt
 
       val templateAddr = symbolIdx * TPN + tpnIdx
 
@@ -146,7 +146,7 @@ object SendUART {
       }
 
       for (k <- lines.indices) {
-        val dataWord = BigInt(lines(k), 16) & 0xFFFFFFFFL
+        val dataWord = BigInt(lines(k), 16) & 0xffffffffL
 
         val addr: BigInt =
           (BigInt(templateAddr) << kWidth) | BigInt(k)
@@ -165,12 +165,12 @@ object SendUART {
   }
 
   def sendImage(
-                 serialPort: SerialPort,
-                 symbolN: Int,
-                 TPN: Int,
-                 imgWidth: Int,
-                 kWidth: Int
-               ): Unit = {
+    serialPort: SerialPort,
+    symbolN: Int,
+    TPN: Int,
+    imgWidth: Int,
+    kWidth: Int
+  ): Unit = {
 
     val imgPath = Paths.get("inputImage.mem")
     if (!Files.exists(imgPath)) {
@@ -193,7 +193,7 @@ object SendUART {
     }
 
     for (k <- lines.indices) {
-      val dataWord = BigInt(lines(k), 16) & 0xFFFFFFFFL
+      val dataWord = BigInt(lines(k), 16) & 0xffffffffL
 
       val addr: BigInt =
         (BigInt(startAddr) << kWidth) | BigInt(k)
