@@ -172,6 +172,8 @@ We find that for this method, the results are overall good, however large discre
 Structurally this makes a alot of sense. Some digits simply have more in common with others. After all our actual algorithm is fairly crude - we are just doing XNOR masking - so
 overlapping images can cause issues. 
 
+### Timing results
+Each input image processing takes about imgWidth cycles to process since we read one line of each image each cycle. At 50MHz and 32x32 images like in MNIST this gives us a processing rate of about 1.5 million images pr second, independent of the number of templates for each symbol.
 
 ## Acknowledgements
 
