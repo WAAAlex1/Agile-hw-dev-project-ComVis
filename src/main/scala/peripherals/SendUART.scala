@@ -43,8 +43,8 @@ object SendUART {
     val TPN      = args(1).toInt
     val imgWidth = args(2).toInt
 
-    val kWidth     = log2Ceil(imgWidth)
-    val indexWidth = log2Ceil(symbolN * TPN)
+    val kWidth     = log2Ceil(imgWidth) // = log2Up(imgWidth-1)
+    val indexWidth = log2Ceil(symbolN * TPN) // = log2Up(symbolN*TPN-1)
 
     println(s"symbolN=$symbolN  TPN=$TPN  imgWidth=$imgWidth")
     println(s"kWidth=$kWidth  indexWidth=$indexWidth")
@@ -86,7 +86,7 @@ object SendUART {
     // Optionally send an image AFTER templates
     // (kept as requested; currently sends nothing)
     // -----------------------------
-    sendImage(serialPort, symbolN, TPN, imgWidth, kWidth)
+    sendImage(serialPort, symbolN, TPN, imgWidth, kWidth, indexWidth)
 
     // -----------------------------
     // Finalize
@@ -109,31 +109,50 @@ object SendUART {
     kWidth: Int
   ): Unit = {
 
-    val templateDir = Paths.get("templates")
+    val templateDir = Paths.get("templates/templates_0")
     if (!Files.exists(templateDir) || !Files.isDirectory(templateDir)) {
       println("templates folder not found")
       System.exit(1)
     }
 
+    // regex extracts TPNidx, symbolNidx from filenames like template_3_7.hex
     val templateRegex: Regex = "template_(\\d+)_(\\d+)\\.mem".r
 
-    val templateFiles = Files
+    // gather files + parsed indices
+    val filesWithIdx: Seq[(java.nio.file.Path, Int, Int)] = Files
       .list(templateDir)
       .toArray
       .map(_.asInstanceOf[java.nio.file.Path])
-      .filter(p => templateRegex.matches(p.getFileName.toString))
+      .flatMap { p =>
+        p.getFileName.toString match {
+          case templateRegex(tpnIdxStr, symbolIdxStr) =>
+            Some((p, tpnIdxStr.toInt, symbolIdxStr.toInt))
+          case _ => None
+        }
+      }
       .toSeq
 
-    println(s"Found ${templateFiles.length} template files")
+    if (filesWithIdx.isEmpty) {
+      println("No template files found.")
+      return
+    }
 
-    for (path <- templateFiles) {
-      val templateRegex(symbolIdxStr, tpnIdxStr) = path.getFileName.toString
-      val tpnIdx                                 = tpnIdxStr.toInt
-      val symbolIdx                              = symbolIdxStr.toInt
+    // Sort deterministically: by symbolIdx then tpnIdx (change if you prefer other ordering)
+    val sorted = filesWithIdx.sortBy { case (_, tpnIdx, symbolIdx) => (symbolIdx, tpnIdx) }
 
-      val templateAddr = symbolIdx * TPN + tpnIdx
+    println(s"Found ${sorted.length} template files")
 
-      println(s"Sending template: ${path.getFileName} -> templateAddr=$templateAddr")
+    // compute indexWidth once
+    val indexWidth = log2Ceil(symbolN * TPN)
+
+    // templateAddr is now a simple sequential counter
+    var templateAddr = 0
+
+    for ((path, tpnIdx, symbolIdx) <- sorted) {
+
+      println(
+        s"Sending template: ${path.getFileName} -> assigned templateAddr=$templateAddr (tpnIdx=$tpnIdx, symbolIdx=$symbolIdx)"
+      )
 
       val lines = Files
         .readAllLines(path)
@@ -148,8 +167,12 @@ object SendUART {
       for (k <- lines.indices) {
         val dataWord = BigInt(lines(k), 16) & 0xffffffffL
 
-        val addr: BigInt =
-          (BigInt(templateAddr) << kWidth) | BigInt(k)
+        // pack addr: [templateAddr << kWidth] | k
+        val addr: BigInt = {
+          val kMasked   = BigInt(k) & ((BigInt(1) << kWidth) - 1)
+          val idxMasked = BigInt(templateAddr) & ((BigInt(1) << indexWidth) - 1)
+          (idxMasked << kWidth) | kMasked
+        }
 
         // --- Send 32-bit address (4 bytes at once)
         val addrBytes = ByteBuffer.allocate(4).putInt(addr.toInt).array()
@@ -161,15 +184,22 @@ object SendUART {
 
         println(f"ADDR=0x${addr}%08X  DATA=0x${dataWord}%08X")
       }
+
+      // increment sequential templateAddr
+      templateAddr += 1
     }
   }
 
+  // -----------------------------
+  // Image sender (unchanged, kept as requested)
+  // -----------------------------
   def sendImage(
     serialPort: SerialPort,
     symbolN: Int,
     TPN: Int,
     imgWidth: Int,
-    kWidth: Int
+    kWidth: Int,
+    indexWidth: Int
   ): Unit = {
 
     val imgPath = Paths.get("inputImage.mem")
@@ -195,8 +225,11 @@ object SendUART {
     for (k <- lines.indices) {
       val dataWord = BigInt(lines(k), 16) & 0xffffffffL
 
-      val addr: BigInt =
-        (BigInt(startAddr) << kWidth) | BigInt(k)
+      val addr: BigInt = {
+        val kMasked   = BigInt(k) & ((BigInt(1) << kWidth) - 1)
+        val idxMasked = BigInt(startAddr) & ((BigInt(1) << indexWidth) - 1)
+        (idxMasked << kWidth) | kMasked
+      }
 
       // --- Send 32-bit address (4 bytes at once)
       val addrBytes = ByteBuffer.allocate(4).putInt(addr.toInt).array()
