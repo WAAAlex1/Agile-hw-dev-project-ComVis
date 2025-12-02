@@ -2,15 +2,15 @@
 
 ## Introduction
 
-This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark (DTU) and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/). 
-Computer Vision was chosen as an interesting area of work where hardware generation using Chisel could prove useful. 
+This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark (DTU) and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/).
+Computer Vision was chosen as an interesting area of work where hardware generation using Chisel could prove useful.
 
 ### Purpose of the project
 
-The project purposefully avoids the use of machine learning algorithms and instead opts for a simple image comparison algorithm. 
-The hardware accelerator is highly parallel and modularized so it can easily be modified to implement more complex algorithms. 
+The project purposefully avoids the use of machine learning algorithms and instead opts for a simple image comparison algorithm.
+The hardware accelerator is highly parallel and modularized so it can easily be modified to implement more complex algorithms.
 At its core, our project is a generic parallelized modular data processing accelerator that could potentially be implemented for a plethora of use-cases outside image processing.
-The project does make use of the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) database of handwritten digits for training image processing systems, even though our model doesn't require training. 
+The project does make use of the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) database of handwritten digits for training image processing systems, even though our model doesn't require training.
 Instead, the ROM-initialized templates are compared against the input image to calculate a confidence score for each possible digit. This could easily be expanded to include additional symbols like letters at the cost of more memory.
 
 ### Diagram
@@ -32,22 +32,18 @@ The tools and setup required for this project are described in the course reposi
 
 ### Testing installation
 
-Before the installation can be tested, some files need to be pre-compiled first. To do this, run:
+Before the installation can be tested, some files need to be generated first. To do this, run:
+
 ```
-example terminal code
+sbt "testOnly SoftwareTests.bmp2HexTest"
 ```
 
-That should create .bmp files. These can be converted further by running:
-```
-example terminal code
-```
+This creates hex files based on the MNIST database.
 
-Now it is possible to run all tests:
+Running all tests can be done now, but note that it will take a while to finish:
 ```
 sbt test
 ```
-
-Everything should pass if the project has been set up correctly.
 
 ## Generating the hardware module
 
@@ -55,7 +51,7 @@ If all tests passed, the module should be ready to generate everything by runnin
 ```
 sbt run
 ```
-After which you will be prompted to choose a top-level. 
+After which you will be prompted to choose a top-level.
 
 We have created two top-level wrappers for synthesis to an FPGA-board to choose from:
 1. **TopWrapper**, a standard top-level wrapper with input-signals to choose between different preloaded input-images.
@@ -66,7 +62,7 @@ Both top-level wrappers include output signals for displaying the identified dig
 
 ### Targeted hardware
 
-This project is designed to run on various FPGA hardware platforms. 
+This project is designed to run on various FPGA hardware platforms.
 There is, however, only a constraint file for the NexusA7 provided in the [Xilinx directory](https://github.com/WAAAlex1/Agile-hw-dev-project-ComVis/tree/master/Xilinx).
 
 ### Dependencies

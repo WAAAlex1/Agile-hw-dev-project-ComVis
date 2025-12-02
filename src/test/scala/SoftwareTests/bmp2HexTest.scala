@@ -17,7 +17,7 @@ class bmp2HexTest extends AnyFlatSpec with ChiselScalatestTester {
 
     BmpUtil.bmp2hexfile(file, threshold, outputHex)
     // Read the generated hex file and print its contents
-    val generatedFile = scala.io.Source.fromFile("templates/" + outputHex + ".hex")
+    val generatedFile = scala.io.Source.fromFile("templates/" + outputHex + ".mem")
     var count = 0
     println("Generated Hex File Contents:")
     for (line <- generatedFile.getLines()) {
@@ -35,7 +35,7 @@ class bmp2HexTest extends AnyFlatSpec with ChiselScalatestTester {
     println("Hex files for all mnist templates have been created.")
     println("Generated Hex File Contents for template 0:")
     // Read the generated hex file and print its contents
-    val generatedFile = scala.io.Source.fromFile("templates/" + "template_0.hex")
+    val generatedFile = scala.io.Source.fromFile("templates/" + "test_output.mem")
     var count = 0
     for (line <- generatedFile.getLines()) {
       count += 1

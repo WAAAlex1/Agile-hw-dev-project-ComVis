@@ -54,7 +54,6 @@ build/
 test_run_dir/
 
 /generated
-/templates/*.hex
 /genForTests
 mnist_0_0.bmp
 mnist_0_1.bmp
