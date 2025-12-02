@@ -13,6 +13,11 @@ At its core, our project is a generic parallelized modular data processing accel
 The project does make use of the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) database of handwritten digits for training image processing systems, even though our model doesn't require training.
 Instead, the ROM-initialized templates are compared against the input image to calculate a confidence score for each possible digit. This could easily be expanded to include additional symbols like letters at the cost of more memory.
 
+### Diagram
+We here include a general diagram of the structure of the hardware with the standard top-level wrapper for synthesis:
+![TopWrapper diagram](Documentation/agile_hardware_top_diagram.svg)
+
+### Contributions
 Contributions to this project repository have been made by:
 
 * s223998 - Alexander Aakersø - GIT: [WAAAlex1](https://github.com/WAAAlex1)
