@@ -34,7 +34,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
     for (digit <- 0 until symbolN) {
       for (templateIdx <- 0 until TPN) {
         val absoluteIdx = digit * TPN + templateIdx
-        val filename = s"genForTests/debug_template_${digit}_${templateIdx}.hex"
+        val filename = s"genForTests/debug_template_${digit}_${templateIdx}.mem"
         val writer = new PrintWriter(new File(filename))
 
         try {
@@ -51,7 +51,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
     }
 
     // Create test image matching digit 0 (all 0xFF)
-    val imageFile = "genForTests/debug_image.hex"
+    val imageFile = "genForTests/debug_image.mem"
     val imageWriter = new PrintWriter(new File(imageFile))
     try {
       for (line <- 0 until imgWidth) {
