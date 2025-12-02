@@ -110,7 +110,7 @@ class TopModuleComVisTester extends AnyFlatSpec with ChiselScalatestTester {
     for ((lineData, lineIdx) <- imageData.zipWithIndex) {
       val imageBramIdx = config.TPN * config.symbolN
       val bramSelWidth = log2Ceil(config.TPN * config.symbolN)
-      val encodedWriteAddr = (imageBramIdx << bramSelWidth) | lineIdx
+      val encodedWriteAddr = (imageBramIdx << log2Ceil(config.imgWidth)) | lineIdx
 
       dut.io.memWrite.wrEn.poke(true.B)
       dut.io.memWrite.wrAddr.poke(encodedWriteAddr)

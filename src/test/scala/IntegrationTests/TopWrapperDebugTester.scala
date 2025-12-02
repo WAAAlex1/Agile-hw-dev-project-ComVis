@@ -34,7 +34,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
     for (digit <- 0 until symbolN) {
       for (templateIdx <- 0 until TPN) {
         val absoluteIdx = digit * TPN + templateIdx
-        val filename = s"genForTests/debug_template_${digit}_${templateIdx}.hex"
+        val filename = s"genForTests/debug_template_${digit}_${templateIdx}.mem"
         val writer = new PrintWriter(new File(filename))
 
         try {
@@ -51,7 +51,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
     }
 
     // Create test image matching digit 0 (all 0xFF)
-    val imageFile = "genForTests/debug_image.hex"
+    val imageFile = "genForTests/debug_image.mem"
     val imageWriter = new PrintWriter(new File(imageFile))
     try {
       for (line <- 0 until imgWidth) {
@@ -70,7 +70,8 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       templatePath = "genForTests/debug_template",
       imagePath = Some(imageFile),
       debug = false,
-      useDebouncer = false
+      useDebouncer = false,
+      includeDebugPorts = true
     )).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       println("\n" + "="*80)
@@ -108,15 +109,15 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       println("\nWaiting for processing...")
       var procCycle = 0
       val maxCycles = 100
-      while (!dut.io.done.peek().litToBoolean && procCycle < maxCycles) {
+      while (!dut.io.debug.get.done.peek().litToBoolean && procCycle < maxCycles) {
         if (procCycle % 10 == 0 || procCycle < 10) {
-          println(f"  Cycle $procCycle%2d: done=${dut.io.done.peek().litToBoolean}")
+          println(f"  Cycle $procCycle%2d: done=${dut.io.debug.get.done.peek().litToBoolean}")
         }
         dut.clock.step(1)
         procCycle += 1
       }
 
-      if (dut.io.done.peek().litToBoolean) {
+      if (dut.io.debug.get.done.peek().litToBoolean) {
         println(s"    Processing complete at cycle $procCycle")
       } else {
         println(s"    ERROR: Processing timed out after $procCycle cycles")
@@ -159,7 +160,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       IPN = IPN,
       symbolN = symbolN,
       templatePath = "genForTests/debug_template",
-      imagePath = Some("genForTests/debug_image.hex"),
+      imagePath = Some("genForTests/debug_image.mem"),
       useDebouncer = false
     )) { dut =>
 
@@ -175,7 +176,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.start.poke(false.B)
 
         var cycles = 0
-        while (!dut.io.done.peek().litToBoolean && cycles < 100) {
+        while (!dut.io.debug.get.done.peek().litToBoolean && cycles < 100) {
           dut.clock.step(1)
           cycles += 1
         }

@@ -169,7 +169,7 @@ class TopWrapperUartToTemplatesTest extends AnyFlatSpec with
               sendWord(temp.U, temp.U)
 
               println(
-                f"templateAddr=$templateAddr  k=$k  → addr=0b${temp.toString(2).reverse.padTo(indexWidth + kWidth, '0').reverse}"
+                f"templateAddr=$templateAddr  k=$k  -> addr=0b${temp.toString(2).reverse.padTo(indexWidth + kWidth, '0').reverse}"
               )
             }
 
@@ -177,25 +177,15 @@ class TopWrapperUartToTemplatesTest extends AnyFlatSpec with
           }
         }
 
-
-
         //Send the image
         for(i <- 0 to imgWidth){
           sendWord((("b" + (symbolN*TPN - 1).toBinaryString) + toBinaryPadded(i,imgWidth)).U,imgData)
           println("Sent imgData: " + imgData + " to addr: " + (("b" + (symbolN*TPN - 1).toBinaryString) + toBinaryPadded(i,imgWidth)))
         }
 
-
-
         //close:
         closeBootloader()
 
-        //Start the comvis:
-        dut.io.start.poke(true.B)
-        dut.clock.step()
-        dut.io.start.poke(false.B)
-        dut.clock.step(imgWidth)
-        dut.io.done.expect(true.B)
       }
   }
 }

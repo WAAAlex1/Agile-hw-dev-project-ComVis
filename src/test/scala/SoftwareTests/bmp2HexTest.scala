@@ -27,7 +27,7 @@ class bmp2HexTest extends AnyFlatSpec with ChiselScalatestTester {
     generatedFile.close()
     println("Total lines in hex file: " + count)
   }
-  "saveTemplates" should "create hex files for all mnist templates" in {
+  "saveTemplates" should "create mem files for all mnist templates" in {
     val width     = 32
     val threshold = 128
 
@@ -42,18 +42,18 @@ class bmp2HexTest extends AnyFlatSpec with ChiselScalatestTester {
       println(line)
     }
     generatedFile.close()
-    println("Total lines in hex file: " + count)
+    println("Total lines in mem file: " + count)
   }
   "saveInputsToHex" should "create hex files for all mnist test inputs" in {
     val width     = 32
     val threshold = 128
 
     BmpUtil.saveInputsToHex(width, threshold)
-    println("Hex files for all mnist test inputs have been created.")
+    println("Mem files for all mnist test inputs have been created.")
 
-    println("Generated Hex File Contents for input 0:")
-    // Read the generated hex file and print its contents
-    val generatedFile = scala.io.Source.fromFile("templates/mnist_input.hex")
+    println("Generated Mem File Contents for input 0:")
+    // Read the generated mem file and print its contents
+    val generatedFile = scala.io.Source.fromFile("templates/mnist_input.mem")
     val lines = generatedFile.getLines().toList
 
     for (i <- 0 until 32) {

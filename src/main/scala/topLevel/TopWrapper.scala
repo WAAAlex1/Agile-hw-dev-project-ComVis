@@ -43,6 +43,7 @@ class TopWrapper(
       val bestConf    = Output(UInt(log2Up((imgWidth * imgWidth) * TPN + 1).W))
       val romBusy     = Output(Bool())
       val romStartOut = Output(Bool())
+      val done        = Output(Bool())
     }))
     else None
   })
@@ -129,6 +130,7 @@ class TopWrapper(
     port.bestConf    := comVis.io.bestConf
     port.romBusy     := initRom.io.busy
     port.romStartOut := initRom.io.startOut
+    port.done        := comVis.io.done
   }
 
 }

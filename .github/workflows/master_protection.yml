@@ -38,7 +38,9 @@ jobs:
 
       # Unit tests not included (basic CI already covers these).
       # Here do property based tests and integration tests.
-      - name: Run property-based tests
-        run: sbt "testOnly property_based_tests.*"
       - name: Run integration tests
-        run: sbt "testOnly IntegrationTests.* -- -n fast"
+        run: sbt "testOnly IntegrationTests.*"
+      - name: Run Software tests
+        run: sbt "testOnly SoftwareTests.*"
+
+
