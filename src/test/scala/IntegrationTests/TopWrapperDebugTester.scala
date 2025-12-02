@@ -90,9 +90,9 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       // Monitor ROM transfer
       println("\nMonitoring ROM transfer:")
       var cycle = 0
-      while (dut.io.debug.romBusy.peek().litToBoolean && cycle < 50) {
+      while (dut.io.debug.get.romBusy.peek().litToBoolean && cycle < 50) {
         if (cycle % 4 == 0 || cycle < 10) {
-          println(f"  Cycle $cycle%2d: ROM busy=${dut.io.debug.romBusy.peek().litToBoolean}")
+          println(f"  Cycle $cycle%2d: ROM busy=${dut.io.debug.get.romBusy.peek().litToBoolean}")
         }
         dut.clock.step(1)
         cycle += 1
@@ -100,7 +100,7 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       println(s"  ROM transfer complete at cycle $cycle")
 
       // Check if ROM triggered startOut
-      if (dut.io.debug.romStartOut.peek().litToBoolean) {
+      if (dut.io.debug.get.romStartOut.peek().litToBoolean) {
         println("  ROM startOut pulse detected")
       }
 
@@ -123,8 +123,8 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
       }
 
       // Read final results
-      val predictedDigit = dut.io.debug.bestIdx.peek().litValue.toInt
-      val confidence = dut.io.debug.bestConf.peek().litValue.toInt
+      val predictedDigit = dut.io.debug.get.bestIdx.peek().litValue.toInt
+      val confidence = dut.io.debug.get.bestConf.peek().litValue.toInt
       val maxScore = imgWidth * imgWidth * TPN
 
       println("\n" + "="*80)
@@ -180,8 +180,8 @@ class TopWrapperDebugTester extends AnyFlatSpec with ChiselScalatestTester {
           cycles += 1
         }
 
-        val conf = dut.io.debug.bestConf.peek().litValue.toInt
-        val pred = dut.io.debug.bestIdx.peek().litValue.toInt
+        val conf = dut.io.debug.get.bestConf.peek().litValue.toInt
+        val pred = dut.io.debug.get.bestIdx.peek().litValue.toInt
 
         println(s"  Predicted: $pred, Confidence: $conf")
         dut.clock.step(10)  // Wait between runs

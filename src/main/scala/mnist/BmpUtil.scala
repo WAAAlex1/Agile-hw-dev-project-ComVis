@@ -1,8 +1,9 @@
 package mnist
 
 import java.awt.image.BufferedImage
-import java.io.{ File, PrintWriter }
+import java.io.{ File, FileInputStream, PrintWriter }
 import javax.imageio.ImageIO
+import scala.io.Source
 
 object BmpUtil {
   def bmp2mem(file: File, threshold: Int): Seq[Int] = {
@@ -73,9 +74,9 @@ object BmpUtil {
         val fileName  = s"mnist_${i}_${j}.bmp"
         val inputFile = new File(fileName)
         bmp2hexfile(inputFile, threshold, f"template_${i}_${j}")
-        // if (!inputFile.delete()) {
-        //  println(s"Could not delete temporary file: $fileName")
-        // }
+        if (!inputFile.delete()) {
+          println(s"Could not delete temporary file: $fileName")
+        }
       }
     }
   }
@@ -116,7 +117,7 @@ object BmpUtil {
       }
     }
 
-    val outputFile = new File("mnist_input.hex")
+    val outputFile = new File("mnist_input.mem")
     val writerHex  = new java.io.PrintWriter("templates/" + outputFile)
 
     try
@@ -146,4 +147,71 @@ object Main {
       }
 
   }
+}
+
+/** Utility to combine template files into a single input file Combines template_X_Y.mem files (where X = digit 0-9, Y =
+  * template 0-9) into a single mnist_input.mem file
+  */
+object CombineTemplates extends App {
+
+  def combineTemplateFiles(
+    inputDir: String = "templates/templates_1",
+    outputFilename: String = "mnist_input.mem",
+    numDigits: Int = 10,
+    templatesPerDigit: Int = 10
+  ): Unit = {
+
+    println(s"Combining template files from $inputDir")
+    println(s"Configuration: $numDigits digits × $templatesPerDigit templates = ${numDigits * templatesPerDigit} files")
+
+    val outputPath = s"$inputDir/$outputFilename"
+    val writer     = new PrintWriter(new File(outputPath))
+
+    try {
+      var totalLines     = 0
+      var filesProcessed = 0
+
+      // Iterate through each digit (0-9)
+      for (digit <- 0 until numDigits)
+        // Iterate through each template for that digit (0-9)
+        for (templateIdx <- 0 until templatesPerDigit) {
+          val inputFilename = s"$inputDir/template_${digit}_${templateIdx}.mem"
+          val inputFile     = new File(inputFilename)
+
+          if (inputFile.exists()) {
+            println(s"  Processing: template_${digit}_${templateIdx}.mem")
+
+            // Read and copy all lines from this file
+            val source = Source.fromFile(inputFile)
+            try {
+              var lineCount = 0
+              for (line <- source.getLines()) {
+                writer.println(line)
+                lineCount += 1
+                totalLines += 1
+              }
+              println(s"    -> Copied $lineCount lines")
+              filesProcessed += 1
+            } finally
+              source.close()
+          } else {
+            println(s"  WARNING: File not found: $inputFilename")
+          }
+        }
+
+      println(s"\nCombination complete!")
+      println(s"  Files processed: $filesProcessed")
+      println(s"  Total lines written: $totalLines")
+      println(s"  Output file: $outputPath")
+
+    } catch {
+      case e: Exception =>
+        println(s"ERROR: ${e.getMessage}")
+        e.printStackTrace()
+    } finally
+      writer.close()
+  }
+
+  // Run with default parameters
+  combineTemplateFiles()
 }
