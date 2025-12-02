@@ -34,14 +34,15 @@ object SendUART {
   // Entry point
   // -----------------------------
   def main(args: Array[String]): Unit = {
-    if (args.length != 3) {
-      println("Usage: SendUART <symbolN> <TPN> <imgWidth>")
+    if (args.length != 4) {
+      println("Usage: SendUART <symbolN> <TPN> <imgWidth> <selectedDigit>")
       System.exit(1)
     }
 
     val symbolN  = args(0).toInt
     val TPN      = args(1).toInt
     val imgWidth = args(2).toInt
+    val selectedDigit  = args(3).toInt
 
     val kWidth     = log2Ceil(imgWidth) // = log2Up(imgWidth-1)
     val indexWidth = log2Ceil(symbolN * TPN) // = log2Up(symbolN*TPN-1)
@@ -86,7 +87,7 @@ object SendUART {
     // Optionally send an image AFTER templates
     // (kept as requested; currently sends nothing)
     // -----------------------------
-    sendImage(serialPort, symbolN, TPN, imgWidth, kWidth, indexWidth)
+    sendImage(serialPort, symbolN, TPN, imgWidth, kWidth, indexWidth, selectedDigit)
 
     // -----------------------------
     // Finalize
@@ -109,7 +110,7 @@ object SendUART {
     kWidth: Int
   ): Unit = {
 
-    val templateDir = Paths.get("templates/templates_0")
+    val templateDir = Paths.get("templates/templates_1")
     if (!Files.exists(templateDir) || !Files.isDirectory(templateDir)) {
       println("templates folder not found")
       System.exit(1)
@@ -174,9 +175,9 @@ object SendUART {
           (idxMasked << kWidth) | kMasked
         }
 
-        // --- Send 32-bit address (4 bytes at once)
+        // --- Send 32-bit address (4 bytes at once) (reverse for little endian)
         val addrBytes = ByteBuffer.allocate(4).putInt(addr.toInt).array()
-        serialPort.writeBytes(addrBytes, 4)
+        serialPort.writeBytes(addrBytes.reverse, 4)
 
         // --- Send 32-bit data (4 bytes at once)
         val dataBytes = ByteBuffer.allocate(4).putInt(dataWord.toInt).array()
@@ -199,10 +200,11 @@ object SendUART {
     TPN: Int,
     imgWidth: Int,
     kWidth: Int,
-    indexWidth: Int
+    indexWidth: Int,
+    selectedDigit: Int
   ): Unit = {
 
-    val imgPath = Paths.get("inputImage.mem")
+    val imgPath = Paths.get(s"templates/templates_0/template_${selectedDigit}_${selectedDigit}.mem")
     if (!Files.exists(imgPath)) {
       println("inputImage.mem not found, skipping image send")
       return
@@ -231,9 +233,9 @@ object SendUART {
         (idxMasked << kWidth) | kMasked
       }
 
-      // --- Send 32-bit address (4 bytes at once)
+      // --- Send 32-bit address (4 bytes at once) (reverse for little endian)
       val addrBytes = ByteBuffer.allocate(4).putInt(addr.toInt).array()
-      serialPort.writeBytes(addrBytes, 4)
+      serialPort.writeBytes(addrBytes.reverse, 4)
 
       // --- Send 32-bit data (4 bytes at once)
       val dataBytes = ByteBuffer.allocate(4).putInt(dataWord.toInt).array()
@@ -257,25 +259,25 @@ object SendUART {
     println("Putting Bootloader to sleep and setting LED high")
 
     val blSleepProtocol = Array[Byte](
+      0x00.toByte,
+      0x00.toByte,
+      0x01.toByte,
       0xf0.toByte,
+      0xff.toByte,
+      0x00.toByte,
+      0x00.toByte,
+      0x00.toByte,
+      0x00.toByte,
+      0x00.toByte,
+      0x00.toByte,
+      0xf1.toByte,
       0x01.toByte,
       0x00.toByte,
       0x00.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0xff.toByte,
-      0xf1.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0x00.toByte,
-      0x01.toByte
+      0x00.toByte
     )
 
-    serialPort.writeBytes(blSleepProtocol, 8)
+    serialPort.writeBytes(blSleepProtocol, 16)
     println(blSleepProtocol.map(b => f"0x$b%02X").mkString("BootSleep: (", " ", ")"))
   }
 }
