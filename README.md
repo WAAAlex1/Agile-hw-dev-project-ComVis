@@ -27,13 +27,13 @@ The tools and setup required for this project are described in the course reposi
 
 ### Testing installation
 
-Before the installation can be tested, some files need to be pre-compiled first. To do this, run:
+Before the installation can be tested, some files need to be generated first. To do this, run:
 
 ```
-sbt "testOnly bmp2HexTest"
+sbt "testOnly SoftwareTests.bmp2HexTest"
 ```
 
-That should generate .bmp files from the templates, which can be converted into hex files.
+This creates hex files based on the MNIST database.
 
 Now it is possible to run all tests (warning - this will take a while [approx 30-40 minutes].
 ```
