@@ -82,7 +82,7 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     val dir = new File("genForTests")
     if (!dir.exists()) dir.mkdirs()
 
-    val filename = s"genForTests/synthetic_images.hex"
+    val filename = s"genForTests/synthetic_images.mem"
     val writer = new PrintWriter(new File(filename))
 
     try {
@@ -110,10 +110,13 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
     BmpUtil.saveTemplates(config.imgWidth, config.threshold, config.symbolN, config.TPN)
     BmpUtil.saveInputsToHex(config.imgWidth, config.threshold)
 
-    val templateFiles = (0 until config.totalTemplates).map { i =>
-      s"templates/template_${i}.hex"
+    val templateFiles = (0 until config.symbolN).flatMap { digit =>
+      (0 until config.TPN).map { templateIdx =>
+        s"templates/template_${digit}_${templateIdx}.mem"
+      }
     }
-    val imageFile = "templates/mnist_input.hex"
+
+    val imageFile = "templates/mnist_input.mem"
 
     println(s"[TestGen] Generated ${templateFiles.length} MNIST templates")
     (templateFiles, imageFile)
@@ -209,14 +212,14 @@ class TopWrapperTester extends AnyFlatSpec with ChiselScalatestTester {
         println(s"  Waiting for processing to complete...")
         var cycles = 0
         val maxCycles = config.imgWidth * 2 + 100
-        while (!dut.io.done.peek().litToBoolean && cycles < maxCycles) {
+        while (!dut.io.debug.get.done.peek().litToBoolean && cycles < maxCycles) {
           dut.clock.step(1)
           cycles += 1
         }
 
         if (cycles >= maxCycles) {
           println(s"    ERROR: Timed out after ${cycles} cycles")
-          println(s"    Final state: done=${dut.io.done.peek().litToBoolean}, romBusy=${dut.io.debug.get.romBusy.peek().litToBoolean}")
+          println(s"    Final state: done=${dut.io.debug.get.done.peek().litToBoolean}, romBusy=${dut.io.debug.get.romBusy.peek().litToBoolean}")
         } else {
           println(s"    Processing completed in ${cycles} cycles")
         }

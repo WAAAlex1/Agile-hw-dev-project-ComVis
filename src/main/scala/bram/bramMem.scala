@@ -77,37 +77,6 @@ class BramMem(
   if (debug) println(s"[BramMem ${digit}_${templateNum}] Created ${depth} x ${width}-bit SyncReadMem")
 }
 
-class BramMemSim(
-  val depth: Int,
-  val width: Int,
-  val debug: Boolean = false,
-  val digit: Int = 0,
-  val templateNum: Int = 0,
-  val initFile: Option[String] = None
-) extends Module {
-  val addrWidth            = log2Ceil(depth)
-  override def desiredName = s"BramMemSim_${digit}_${templateNum}"
-
-  val io = IO(new Bundle {
-    val addr   = Input(UInt(addrWidth.W))
-    val en     = Input(Bool())
-    val wrEn   = Input(Bool())
-    val wrData = Input(UInt(width.W))
-    val rdData = Output(UInt(width.W))
-  })
-
-  val mem = SyncReadMem(depth, UInt(width.W))
-
-  // Simulation initialization
-  initFile.foreach(f => loadMemoryFromFileInline(mem, f))
-
-  when(io.en && io.wrEn)(mem.write(io.addr, io.wrData))
-  io.rdData                         := 0.U
-  when(io.en && !io.wrEn)(io.rdData := mem.read(io.addr))
-
-  if (debug) println(s"[BramMemSim ${digit}_${templateNum}] Created ${depth}x${width} simulation BRAM")
-}
-
 /** BramMemWrapper - High-level wrapper for template storage
   *
   * Provides a clean interface for reading image templates line-by-line. Handles address generation.
