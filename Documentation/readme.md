@@ -105,6 +105,15 @@ set_property KEEP_HIERARCHY TRUE [get_cells -hierarchical -filter {NAME =~ "*tem
 
 3. Initialize the vivado project from the zipped folder within /fpga/topWrapper/projectZipped
 
+4. If running TopWrapperUART you must transmit the templates and input image over the serialport. To do so run the following scala program with your desired parameters:
+```
+sbt runMain peripherals.SendUART symbolN TPN imgWidth inputNumber
+```
+For example with symbolN=10, TPN=10, imgWidth=32 and an input image displaying 1, run:
+```
+sbt runMain peripherals.SendUART 10 10 32 1
+```
+Remember to wait for the 8 transmit-done LEDs before pressing the start button.
 
 ## Dependencies
 
