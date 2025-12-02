@@ -35,7 +35,7 @@ sbt "testOnly bmp2HexTest"
 
 That should generate .bmp files from the templates, which can be converted into hex files.
 
-Now it is possible to run all tests (warning - this will take a while [approx 30-40 minutes].
+Now it is possible to run all tests (warning - this will take a while [approx 10-30 minutes].
 ```
 sbt test
 ```
@@ -115,6 +115,8 @@ sbt runMain peripherals.SendUART 10 10 32 1
 ```
 Remember to wait for the 8 transmit-done LEDs before pressing the start button.
 
+Be aware that for SendUART to work memory files will have to be manually moved into tempaltes/templates_0 and templates/templates_1
+
 ## Dependencies
 
 The project's only dependencies are found in the [build](https://github.com/WAAAlex1/Agile-hw-dev-project-ComVis/blob/master/build.sbt) file.
@@ -174,8 +176,6 @@ overlapping images can cause issues.
 
 ### Timing results
 Each input image processing takes about imgWidth cycles to process since we read one line of each image each cycle. At 50MHz and 32x32 images like in MNIST this gives us a processing rate of about 1.5 million images pr second, independent of the number of templates for each symbol.
-
-## Acknowledgements
 
 
 
