@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark (DTU) and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/). 
+This project has been made as part of the [Agile Hardware Design [02203]](https://lifelonglearning.dtu.dk/compute/enkeltfag/agil-hardwareudvikling/) course  offered at The Technical University of Denmark (DTU) and taught by [Martin Schoeberl](https://www.imm.dtu.dk/~masca/).
 Computer Vision was chosen as an interesting area of work where hardware generation using Chisel could prove useful in an agile working environment.
 
 ### Purpose of the project
@@ -13,11 +13,6 @@ At its core, our project is a generic parallelized modular data processing accel
 The project does make use of the [MNIST](https://en.wikipedia.org/wiki/MNIST_database) database of handwritten digits for training image processing systems, even though our model doesn't require training.
 Instead, the ROM-initialized templates are compared against the input image to calculate a confidence score for each possible digit. This could easily be expanded to include additional symbols like letters at the cost of more memory.
 
-### Diagram
-We here include a general diagram of the structure of the hardware with the standard top-level wrapper for synthesis:
-![TopWrapper diagram](Documentation/agile_hardware_top_diagram.svg)
-
-### Contributions
 Contributions to this project repository have been made by:
 
 * s223998 - Alexander Aakersø - GIT: [WAAAlex1](https://github.com/WAAAlex1)
@@ -32,13 +27,13 @@ The tools and setup required for this project are described in the course reposi
 
 ### Testing installation
 
-Before the installation can be tested, some files need to be generated first. To do this, run:
+Before the installation can be tested, some files need to be pre-compiled first. To do this, run:
 
 ```
-sbt "testOnly SoftwareTests.bmp2HexTest"
+sbt "testOnly bmp2HexTest"
 ```
 
-This creates hex files based on the MNIST database.
+That should generate .bmp files from the templates, which can be converted into hex files.
 
 Now it is possible to run all tests (warning - this will take a while [approx 30-40 minutes].
 ```
@@ -110,6 +105,15 @@ set_property KEEP_HIERARCHY TRUE [get_cells -hierarchical -filter {NAME =~ "*tem
 
 3. Initialize the vivado project from the zipped folder within /fpga/topWrapper/projectZipped
 
+4. If running TopWrapperUART you must transmit the templates and input image over the serialport. To do so run the following scala program with your desired parameters:
+```
+sbt runMain peripherals.SendUART symbolN TPN imgWidth inputNumber
+```
+For example with symbolN=10, TPN=10, imgWidth=32 and an input image displaying 1, run:
+```
+sbt runMain peripherals.SendUART 10 10 32 1
+```
+Remember to wait for the 8 transmit-done LEDs before pressing the start button.
 
 ## Dependencies
 
@@ -133,8 +137,8 @@ Results are reported using an LED signalling the completion of a comparison. The
             |            |
      Predicted Digit     |
                          |
-            Confidence score (percent as HEX)
-
+            Confidence score (percent as HEX)                   
+ 
 ```
 
 Inputs are given using switches and a button signalling start. For the precise location of these we refer to the constraint files.
@@ -159,7 +163,7 @@ img 3: Conf % [prediction digit] | 89% [0] | 96% [1] | 88% [2]     | 86% [1] !!!
 img 4: Conf % [prediction digit] | 91% [0] | 96% [1] | 87% [3] !!! | 91% [3]       | 89% [1] !!!  | 87% [0] !!!  | 89% [6] | 89% [9]!!! | 89% [1] !!! | 86% [9]
 img 5: Conf % [prediction digit] | 88% [0] | 96% [1] | 89% [2]     | 86% [3]       | 91% [4]      | 88% [1] !!!  | 93% [6] | 91% [7]    | 89% [1] !!! | 91% [9]
 img 6: Conf % [prediction digit] | 91% [0] | 96% [1] | 87% [2]     | 86 [1] !!!    | 87% [4]      | 89% [1]      | 91% [6] | 93% [7]    | 88% [8]     | 92% [9]
-img 7: Conf % [prediction digit] | 90% [0] | 96% [1] | 87% [1] !!! | 90% [3]       | 87% [4]      | 89% [8] !!!  | 93% [6] | 93% [7]    | 91% [8]     | 92% [9]
+img 7: Conf % [prediction digit] | 90% [0] | 96% [1] | 87% [1] !!! | 90% [3]       | 87% [4]      | 89% [8] !!!  | 93% [6] | 93% [7]    | 91% [8]     | 92% [9]   
 img 8: Conf % [prediction digit] | 87% [0] | 96% [1] | 84% [3] !!! | 88% [3]       | 88% [4]      | 87% [5]      | 91% [6] | 93% [7]    | 90% [8]     | 91% [9]
 img 9: Conf % [prediction digit] | 90% [0] | 96% [1] | 90% [2]     | 91% [3]       | 91% [4]      | 87% [9] !!!  | 88% [6] | 91% [7]    | 91% [8]     | 89% [9]
 **Total**                        | **10/10**|**10/10**| **6/10**    | **7/10**      | **8/10**     | **3/10**     | **10/10**   | **9/10**       | **6/10**        | **9/10**
@@ -168,6 +172,8 @@ We find that for this method, the results are overall good, however large discre
 Structurally this makes a alot of sense. Some digits simply have more in common with others. After all our actual algorithm is fairly crude - we are just doing XNOR masking - so
 overlapping images can cause issues.
 
+### Timing results
+Each input image processing takes about imgWidth cycles to process since we read one line of each image each cycle. At 50MHz and 32x32 images like in MNIST this gives us a processing rate of about 1.5 million images pr second, independent of the number of templates for each symbol.
 
 ## Acknowledgements
 

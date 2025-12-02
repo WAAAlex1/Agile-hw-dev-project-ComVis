@@ -105,6 +105,15 @@ set_property KEEP_HIERARCHY TRUE [get_cells -hierarchical -filter {NAME =~ "*tem
 
 3. Initialize the vivado project from the zipped folder within /fpga/topWrapper/projectZipped
 
+4. If running TopWrapperUART you must transmit the templates and input image over the serialport. To do so run the following scala program with your desired parameters:
+```
+sbt runMain peripherals.SendUART symbolN TPN imgWidth inputNumber
+```
+For example with symbolN=10, TPN=10, imgWidth=32 and an input image displaying 1, run:
+```
+sbt runMain peripherals.SendUART 10 10 32 1
+```
+Remember to wait for the 8 transmit-done LEDs before pressing the start button.
 
 ## Dependencies
 
@@ -163,6 +172,8 @@ We find that for this method, the results are overall good, however large discre
 Structurally this makes a alot of sense. Some digits simply have more in common with others. After all our actual algorithm is fairly crude - we are just doing XNOR masking - so
 overlapping images can cause issues. 
 
+### Timing results
+Each input image processing takes about imgWidth cycles to process since we read one line of each image each cycle. At 50MHz and 32x32 images like in MNIST this gives us a processing rate of about 1.5 million images pr second, independent of the number of templates for each symbol.
 
 ## Acknowledgements
 
