@@ -55,10 +55,10 @@ class InitRom(
     val busy     = Output(Bool())
   })
 
-  if(debug) println(s"[InitRom] Image BRAM index: ${imageBramIdx}")
-  if(debug) println(s"[InitRom] BRAM select bits: ${bramSelWidth}")
-  if(debug) println(s"[InitRom] Line address bits: ${lineAddrWidth}")
-  if(debug) println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
+  if (debug) println(s"[InitRom] Image BRAM index: ${imageBramIdx}")
+  if (debug) println(s"[InitRom] BRAM select bits: ${bramSelWidth}")
+  if (debug) println(s"[InitRom] Line address bits: ${lineAddrWidth}")
+  if (debug) println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
 
   // ==================== ROM MEMORY ====================
 
@@ -69,10 +69,10 @@ class InitRom(
   initFile match {
     case Some(file) =>
       loadMemoryFromFileInline(romMem, file)
-      if(debug) println(s"[InitRom] Initialized ${totalImages} images from $file")
-      if(debug) println(s"[InitRom] Total lines in file: $totalLines (${totalImages} x ${imgWidth})")
+      if (debug) println(s"[InitRom] Initialized ${totalImages} images from $file")
+      if (debug) println(s"[InitRom] Total lines in file: $totalLines (${totalImages} x ${imgWidth})")
     case None =>
-      if(debug) println(s"[InitRom] WARNING: No init file - ROM will be uninitialized")
+      if (debug) println(s"[InitRom] WARNING: No init file - ROM will be uninitialized")
   }
 
   // ==================== STATE MACHINE ====================

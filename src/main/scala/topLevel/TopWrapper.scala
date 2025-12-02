@@ -38,12 +38,13 @@ class TopWrapper(
     val cathodes = Output(UInt(8.W))
 
     // Debug outputs for testing (could be wrapped in #ifdef for synthesis)
-    val debug = if(includeDebugPorts) Some(Output(new Bundle {
+    val debug = if (includeDebugPorts) Some(Output(new Bundle {
       val bestIdx     = Output(UInt(log2Up(symbolN).W))
       val bestConf    = Output(UInt(log2Up((imgWidth * imgWidth) * TPN + 1).W))
       val romBusy     = Output(Bool())
       val romStartOut = Output(Bool())
-    })) else None
+    }))
+    else None
   })
 
   // Build template file list and pass it to TopModuleComVis
@@ -67,7 +68,7 @@ class TopWrapper(
   )
 
   // seven seg
-  val maxScore = (imgWidth * imgWidth) * TPN;
+  val maxScore       = (imgWidth * imgWidth) * TPN;
   val sevenSegDriver = Module(new SevenSegDriver(maxScore = maxScore))
 
   // instantiate memory
@@ -92,9 +93,9 @@ class TopWrapper(
   val bestConfHold = RegInit(0.U(log2Up((imgWidth * imgWidth) * TPN + 1).W))
   val doneHold     = RegInit(false.B)
 
-  when(comVis.io.done){
-    doneHold := comVis.io.done
-    bestIdxHold := comVis.io.bestIdx
+  when(comVis.io.done) {
+    doneHold     := comVis.io.done
+    bestIdxHold  := comVis.io.bestIdx
     bestConfHold := comVis.io.bestConf
   }
 
@@ -114,13 +115,13 @@ class TopWrapper(
 
   // ComVis to SevenSeg and digit select
   sevenSegDriver.io.digitA     := io.digitSel
-  sevenSegDriver.io.digitB     := bestIdxHold  // Use held value
+  sevenSegDriver.io.digitB     := bestIdxHold // Use held value
   sevenSegDriver.io.confidence := bestConfHold // Use held value
 
   // outputs
   io.anodes   := sevenSegDriver.io.anodes
   io.cathodes := sevenSegDriver.io.cathodes
-  io.done     := doneHold                     // Use held value
+  io.done     := doneHold // Use held value
 
   // Debug outputs
   io.debug.foreach { port =>
@@ -130,18 +131,17 @@ class TopWrapper(
     port.romStartOut := initRom.io.startOut
   }
 
-
 }
 
 object TopWrapper extends App {
 
   // Check if files exist, only generate if missing
   val templateRoot = "template"
-  val imageFile   = "mnist_input.mem"
+  val imageFile    = "mnist_input.mem"
 
-  val width   = 32
-  val number_of_digits = 10
-  val templates_per_digit     = 10
+  val width               = 32
+  val number_of_digits    = 10
+  val templates_per_digit = 10
 
   val numImages = 10
 
@@ -163,7 +163,8 @@ object TopWrapper extends App {
       includeDebugPorts = false
     ),
     Array(
-      "--target-dir", "generated"
+      "--target-dir",
+      "generated"
     )
   )
 }

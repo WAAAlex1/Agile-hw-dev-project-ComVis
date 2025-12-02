@@ -7,34 +7,33 @@ import chisel3.util.experimental.loadMemoryFromFileInline
 import comvis._
 
 /** InitRom - ROM containing test images with transfer controller
- *
- * Uses SyncReadMem for BRAM inference on FPGA.
- * Handles 1-cycle read latency with pipelined state machine.
- *
- * @param IPN
- *   Images per number
- * @param TPN
- *   Templates per number
- * @param symbolN
- *   Number of symbols (digits 0-9)
- * @param imgWidth
- *   Image width (and height, since square)
- * @param initFile
- *   Single mem (hex formatted) file with all images concatenated
- */
+  *
+  * Uses SyncReadMem for BRAM inference on FPGA. Handles 1-cycle read latency with pipelined state machine.
+  *
+  * @param IPN
+  *   Images per number
+  * @param TPN
+  *   Templates per number
+  * @param symbolN
+  *   Number of symbols (digits 0-9)
+  * @param imgWidth
+  *   Image width (and height, since square)
+  * @param initFile
+  *   Single mem (hex formatted) file with all images concatenated
+  */
 class InitRam(
-               val IPN: Int,
-               val TPN: Int,
-               val symbolN: Int,
-               val imgWidth: Int,
-               val initFile: Option[String] = None,
-               val debug: Boolean = false
-             ) extends Module {
+  val IPN: Int,
+  val TPN: Int,
+  val symbolN: Int,
+  val imgWidth: Int,
+  val initFile: Option[String] = None,
+  val debug: Boolean = false
+) extends Module {
 
   val totalImages  = IPN * symbolN
-  val totalLines   = totalImages * imgWidth   // e.g., 100 * 32 = 3200 lines total
-  val totalBrams   = TPN * symbolN + 1        // 100 template BRAMs + 1 image BRAM = 101 total
-  val imageBramIdx = TPN * symbolN            // Image BRAM is at index 100 (after all templates)
+  val totalLines   = totalImages * imgWidth // e.g., 100 * 32 = 3200 lines total
+  val totalBrams   = TPN * symbolN + 1 // 100 template BRAMs + 1 image BRAM = 101 total
+  val imageBramIdx = TPN * symbolN // Image BRAM is at index 100 (after all templates)
 
   val lineAddrWidth    = log2Ceil(imgWidth)
   val bramSelWidth     = log2Ceil(totalBrams)
@@ -54,10 +53,10 @@ class InitRam(
     val busy     = Output(Bool())
   })
 
-  if(debug) println(s"[InitRom] Image BRAM index: ${imageBramIdx}")
-  if(debug) println(s"[InitRom] BRAM select bits: ${bramSelWidth}")
-  if(debug) println(s"[InitRom] Line address bits: ${lineAddrWidth}")
-  if(debug) println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
+  if (debug) println(s"[InitRom] Image BRAM index: ${imageBramIdx}")
+  if (debug) println(s"[InitRom] BRAM select bits: ${bramSelWidth}")
+  if (debug) println(s"[InitRom] Line address bits: ${lineAddrWidth}")
+  if (debug) println(s"[InitRom] Total write address bits: ${totalWrAddrWidth}")
 
   // ==================== BRAM MEMORY (Synchronous Read) ====================
 
@@ -68,10 +67,10 @@ class InitRam(
   initFile match {
     case Some(file) =>
       loadMemoryFromFileInline(romMem, file)
-      if(debug) println(s"[InitRom] Initialized ${totalImages} images from $file")
-      if(debug) println(s"[InitRom] Total lines in file: $totalLines (${totalImages} x ${imgWidth})")
+      if (debug) println(s"[InitRom] Initialized ${totalImages} images from $file")
+      if (debug) println(s"[InitRom] Total lines in file: $totalLines (${totalImages} x ${imgWidth})")
     case None =>
-      if(debug) println(s"[InitRom] WARNING: No init file - ROM will be uninitialized")
+      if (debug) println(s"[InitRom] WARNING: No init file - ROM will be uninitialized")
   }
 
   // ==================== STATE MACHINE ====================
@@ -82,7 +81,7 @@ class InitRam(
   import State._
 
   val stateReg      = RegInit(idle)
-  val lineCounter   = RegInit(0.U((lineAddrWidth).W))
+  val lineCounter   = RegInit(0.U(lineAddrWidth.W))
   val selectedDigit = RegInit(0.U(4.W))
   val selectedImg   = RegInit(0.U(4.W))
 
@@ -136,7 +135,7 @@ class InitRam(
       writeAddrReg := encodedWriteAddr
 
       // Check if transfer complete
-      when(lineCounter === (imgWidth-1).U) {
+      when(lineCounter === (imgWidth - 1).U) {
         // Last write will happen this cycle
         stateReg := lastTransfer
       }.otherwise {
@@ -144,11 +143,11 @@ class InitRam(
         // Continue reading next line
       }
     }
-    is(lastTransfer){
-      io.writeOut.wrEn  := true.B
+    is(lastTransfer) {
+      io.writeOut.wrEn   := true.B
       io.writeOut.wrAddr := writeAddrReg
       io.writeOut.wrData := romData
-      stateReg := done
+      stateReg           := done
     }
 
     is(done) {
