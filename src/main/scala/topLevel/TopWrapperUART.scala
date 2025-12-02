@@ -55,15 +55,15 @@ class TopWrapperUART(
   }
 
   // LED reg:
-  val ledReg = RegInit(0.U(8.W))
-  val doneReg = RegInit(0.U(1.W))
-  val bestIdxReg = RegInit(0.U(log2Up(symbolN).W))
+  val ledReg      = RegInit(0.U(8.W))
+  val doneReg     = RegInit(0.U(1.W))
+  val bestIdxReg  = RegInit(0.U(log2Up(symbolN).W))
   val bestConfReg = RegInit(0.U(log2Up((imgWidth * imgWidth * TPN) + 1).W))
 
-  when(comVis.io.done){
-    bestIdxReg := comVis.io.bestIdx
+  when(comVis.io.done) {
+    bestIdxReg  := comVis.io.bestIdx
     bestConfReg := comVis.io.bestConf
-    doneReg := comVis.io.done
+    doneReg     := comVis.io.done
   }
 
   // connections

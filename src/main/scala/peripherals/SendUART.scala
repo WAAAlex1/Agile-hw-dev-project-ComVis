@@ -39,10 +39,10 @@ object SendUART {
       System.exit(1)
     }
 
-    val symbolN  = args(0).toInt
-    val TPN      = args(1).toInt
-    val imgWidth = args(2).toInt
-    val selectedDigit  = args(3).toInt
+    val symbolN       = args(0).toInt
+    val TPN           = args(1).toInt
+    val imgWidth      = args(2).toInt
+    val selectedDigit = args(3).toInt
 
     val kWidth     = log2Ceil(imgWidth) // = log2Up(imgWidth-1)
     val indexWidth = log2Ceil(symbolN * TPN) // = log2Up(symbolN*TPN-1)
